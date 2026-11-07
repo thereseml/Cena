@@ -8,6 +8,16 @@
 
 ---
 
+
+## Documentation routing for GPT/Codex and OpenCode
+
+- Always read `docs/blueprint.md` before implementing a feature, as required by Section 2. Use `docs/README.md` to select focused topic documents for deeper task-specific context; the index does not replace the canonical blueprint.
+- `docs/blueprint.md` remains the preserved canonical original. The extracted documents are navigational copies, not new decisions.
+- When focused documents conflict with the original, flag the discrepancy and follow the original until a decision is recorded.
+- Keep P0, P1 and P2 distinctions intact; do not infer approval for open decisions.
+- Inspect the actual repository before assuming proposed architecture has been implemented.
+- Both Codex and OpenCode follow this same `AGENTS.md`; do not rely on tool-specific conversation memory.
+
 ## 1. Project Identity
 
 Cena is an AI-powered mobile kitchen assistant.
@@ -197,7 +207,7 @@ Never overwrite uncommitted user changes.
 
 ## 5. Technology Stack
 
-Use the stack defined in `docs/blueprint.md`.
+Use the stack defined in `docs/blueprint.md`. For focused context, use `docs/README.md` to locate the relevant extracted specification.
 
 Current preferred architecture:
 
@@ -365,7 +375,7 @@ Every interactive screen should handle:
 
 ## 9. Cena Design System
 
-All UI work must follow the Cena Design System in `docs/blueprint.md`.
+All UI work must follow the Cena Design System in `docs/design-system.md` (extracted from `docs/blueprint.md`).
 
 ### Visual direction
 
@@ -836,7 +846,7 @@ When uncertain, prefer the simplest reversible solution.
 
 ## 20. Development Priorities
 
-Follow the implementation sequence in `docs/blueprint.md`.
+Follow the implementation sequence in `docs/delivery.md` (extracted from `docs/blueprint.md`).
 
 Initial priorities:
 
