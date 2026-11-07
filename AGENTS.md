@@ -13,7 +13,7 @@
 
 - Always read `docs/blueprint.md` before implementing a feature, as required by Section 2. Use `docs/README.md` to select focused topic documents for deeper task-specific context; the index does not replace the canonical blueprint.
 - `docs/blueprint.md` remains the preserved canonical original. The extracted documents are navigational copies, not new decisions.
-- When focused documents conflict with the original, flag the discrepancy and follow the original until a decision is recorded.
+- For private-beta feature scope and priorities, follow the newer approved product decisions in `docs/mvp-scope.md` when they conflict with historical P0/P1 descriptions in `docs/blueprint.md` or extracted documents. For other conflicts, flag discrepancies and follow the original until a decision is recorded.
 - Keep P0, P1 and P2 distinctions intact; do not infer approval for open decisions.
 - Inspect the actual repository before assuming proposed architecture has been implemented.
 - Both Codex and OpenCode follow this same `AGENTS.md`; do not rely on tool-specific conversation memory.
@@ -65,7 +65,7 @@ When instructions conflict, follow:
 1. System and developer instructions from the execution environment.
 2. Explicit instructions from the current user.
 3. This `AGENTS.md`.
-4. `docs/blueprint.md`.
+4. `docs/mvp-scope.md` for approved beta scope, then `docs/blueprint.md` for other product/technical requirements.
 5. Existing repository conventions.
 
 Existing code describes the current implementation, not necessarily the intended product behavior.
