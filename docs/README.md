@@ -2,10 +2,11 @@
 
 Start here when working with Codex, GPT or OpenCode. Read only the documents relevant to your task, plus [AGENTS.md](../AGENTS.md).
 
-**Canonical original:** [blueprint.md](blueprint.md) is preserved verbatim. The focused documents below are reorganized excerpts of that source, not independent product decisions. If they disagree, use the original blueprint and flag the inconsistency. Section numbers deliberately match the original.
+**Canonical original:** [blueprint.md](blueprint.md) is preserved verbatim. The focused documents below are reorganized excerpts of that source, not independent product decisions. For general requirements use the original blueprint; for approved private-beta scope, [mvp-scope.md](mvp-scope.md) supersedes conflicting historical P0/P1 priorities. Flag other discrepancies. Section numbers deliberately match the original.
 
 | Task | Read |
 | --- | --- |
+| **Approved private-beta MVP scope and acceptance criteria** | [mvp-scope.md](mvp-scope.md) (new product-owner decisions) |
 | Product vision, decisions, scope and risks | [product.md](product.md) (sections 1, 2, 3, 4, 19, 26, 27) |
 | Navigation, journeys, screen requirements and accessibility | [experience.md](experience.md) (sections 5, 7, 17) |
 | Warm Minimalism tokens and component rules | [design-system.md](design-system.md) (sections 6) |
@@ -20,7 +21,8 @@ Start here when working with Codex, GPT or OpenCode. Read only the documents rel
 1. Read [AGENTS.md](../AGENTS.md) for collaboration, safety and PR rules.
 2. Read this index and the one or two relevant topic files.
 3. Inspect actual code, tests and existing ADRs before implementing.
-4. For ambiguous requirements, consult [the original blueprint](blueprint.md) and document unresolved decisions rather than guessing.
+4. For beta work, read [mvp-scope.md](mvp-scope.md) before choosing P0/P1 priorities.
+5. For ambiguous requirements, consult [the original blueprint](blueprint.md) and document unresolved decisions rather than guessing.
 
 ## Documentation maintenance
 
