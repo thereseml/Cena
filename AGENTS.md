@@ -4,7 +4,7 @@
 > Project: Cena
 > Applies to: All AI coding agents, including OpenAI Codex, GPT-based coding agents, OpenCode, and their subagents.
 > Scope: Entire repository
-> Primary specification: `CENA_BLUEPRINT.md`
+> Primary specification: `docs/blueprint.md`
 
 ---
 
@@ -44,7 +44,7 @@ Every implementation decision should support this principle.
 Before implementing any feature, read:
 
 1. `AGENTS.md` — Agent instructions.
-2. `CENA_BLUEPRINT.md` — Product and technical specification.
+2. `docs/blueprint.md` — Product and technical specification.
 3. Relevant existing source code.
 4. Existing tests and architectural decisions.
 
@@ -55,7 +55,7 @@ When instructions conflict, follow:
 1. System and developer instructions from the execution environment.
 2. Explicit instructions from the current user.
 3. This `AGENTS.md`.
-4. `CENA_BLUEPRINT.md`.
+4. `docs/blueprint.md`.
 5. Existing repository conventions.
 
 Existing code describes the current implementation, not necessarily the intended product behavior.
@@ -197,7 +197,7 @@ Never overwrite uncommitted user changes.
 
 ## 5. Technology Stack
 
-Use the stack defined in `CENA_BLUEPRINT.md`.
+Use the stack defined in `docs/blueprint.md`.
 
 Current preferred architecture:
 
@@ -365,7 +365,7 @@ Every interactive screen should handle:
 
 ## 9. Cena Design System
 
-All UI work must follow the Cena Design System in `CENA_BLUEPRINT.md`.
+All UI work must follow the Cena Design System in `docs/blueprint.md`.
 
 ### Visual direction
 
@@ -836,7 +836,7 @@ When uncertain, prefer the simplest reversible solution.
 
 ## 20. Development Priorities
 
-Follow the implementation sequence in `CENA_BLUEPRINT.md`.
+Follow the implementation sequence in `docs/blueprint.md`.
 
 Initial priorities:
 
