@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "Cena",
+    "slug": "cena",
+    "scheme": "cena",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F8F6F0"
+      }
+    },
+    "plugins": []
+  }
+}
