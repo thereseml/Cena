@@ -1,0 +1,46 @@
+name: Feature / user story
+description: Propose a scoped Cena feature or user journey
+title: "[Feature] "
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: User outcome
+      description: What problem is solved, for whom, and why?
+      placeholder: "As a household member, I want ..."
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: MVP priority
+      options:
+        - P0 — private beta
+        - P1 — after beta
+        - P2 — future
+        - Needs product decision
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Testable acceptance criteria
+      placeholder: "- Given ... when ... then ..."
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: In scope / out of scope
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: References, dependencies and open ADR gates
+      description: Link MVP journey, ADRs, related Issues and impacted modules.
+  - type: textarea
+    id: tests
+    attributes:
+      label: Expected tests and risk considerations
+      description: Include household authorization, privacy, confirmation or failure cases where relevant.

@@ -6,6 +6,7 @@ Start here when working with Codex, GPT or OpenCode. Read only the documents rel
 
 | Task | Read |
 | --- | --- |
+| **AI team workflow, roles and safety gates** | [agent-workflow.md](agent-workflow.md) · [agent roles](../agents/README.md) |
 | **Accepted architecture decisions and open implementation gates** | [adr/README.md](adr/README.md) (ADRs 0001–0006) |
 | **Approved private-beta MVP scope and acceptance criteria** | [mvp-scope.md](mvp-scope.md) (new product-owner decisions) |
 | Product vision, decisions, scope and risks | [product.md](product.md) (sections 1, 2, 3, 4, 19, 26, 27) |

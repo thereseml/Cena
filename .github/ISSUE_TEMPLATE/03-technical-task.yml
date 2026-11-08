@@ -1,0 +1,27 @@
+name: Technical task
+description: Scoped architecture, tooling or engineering work
+title: "[Tech] "
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective and rationale
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and affected modules
+    validations:
+      required: true
+  - type: textarea
+    id: criteria
+    attributes:
+      label: Acceptance criteria and verification
+    validations:
+      required: true
+  - type: textarea
+    id: decisions
+    attributes:
+      label: ADRs, dependencies and security implications
+      description: Do not treat a proposed default as an approved decision.
