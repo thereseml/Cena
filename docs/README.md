@@ -6,6 +6,7 @@ Start here when working with Codex, GPT or OpenCode. Read only the documents rel
 
 | Task | Read |
 | --- | --- |
+| **Accepted architecture decisions and open implementation gates** | [adr/README.md](adr/README.md) (ADRs 0001–0006) |
 | **Approved private-beta MVP scope and acceptance criteria** | [mvp-scope.md](mvp-scope.md) (new product-owner decisions) |
 | Product vision, decisions, scope and risks | [product.md](product.md) (sections 1, 2, 3, 4, 19, 26, 27) |
 | Navigation, journeys, screen requirements and accessibility | [experience.md](experience.md) (sections 5, 7, 17) |
@@ -22,11 +23,12 @@ Start here when working with Codex, GPT or OpenCode. Read only the documents rel
 2. Read this index and the one or two relevant topic files.
 3. Inspect actual code, tests and existing ADRs before implementing.
 4. For beta work, read [mvp-scope.md](mvp-scope.md) before choosing P0/P1 priorities.
-5. For ambiguous requirements, consult [the original blueprint](blueprint.md) and document unresolved decisions rather than guessing.
+5. Before architecture or implementation work, read [accepted ADRs](adr/README.md) and their unresolved gates.
+6. For ambiguous requirements, consult [the original blueprint](blueprint.md) and document unresolved decisions rather than guessing.
 
 ## Documentation maintenance
 
 - Keep `blueprint.md` as the historical original; do not silently edit it.
 - When product decisions change, propose an explicit decision/ADR and update relevant focused docs after approval.
 - Preserve P0/P1/P2 distinctions. The phased roadmap is not permission to silently promote P1 features to P0.
-- Technical defaults are proposals until accepted through implementation or an ADR.
+- Technical defaults are proposals until accepted through an ADR. Accepted ADRs supersede conflicting proposed technical defaults; deferred decisions remain open.
