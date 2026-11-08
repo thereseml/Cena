@@ -6,7 +6,7 @@ Swedish-first kitchen assistant. This repository contains the minimal mobile/API
 
 - Node.js 22 LTS (or a compatible current LTS)
 - pnpm 10 (`corepack enable` and `corepack prepare pnpm@10.20.0 --activate`)
-- Expo Go or an emulator for the mobile app
+- An emulator or development build for Expo SDK 58 (Expo Go availability varies by platform)
 
 ## Get started
 
@@ -20,7 +20,7 @@ Mobile: Expo development server (scan QR code or use emulator). API: `http://loc
 
 Useful commands: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`.
 
-Prisma is only scaffolded. Copy `apps/api/.env.example` to `apps/api/.env` and provide a development-only PostgreSQL URL before `pnpm --filter @cena/api db:validate` or `db:generate`. No models, migrations or production database configuration exist yet. Do not run migrations against production.
+Prisma 7 is only scaffolded; the connection URL is configured in `apps/api/prisma.config.ts`. Copy `apps/api/.env.example` to `apps/api/.env` and provide a development-only PostgreSQL URL before `pnpm --filter @cena/api db:validate` or `db:generate`. No models, migrations or production database configuration exist yet. Do not run migrations against production.
 
 ## Verification
 

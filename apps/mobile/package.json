@@ -13,15 +13,15 @@
     "test": "node -e \"console.log('No mobile tests configured yet')\""
   },
   "dependencies": {
-    "expo": "~54.0.0",
-    "expo-status-bar": "~3.0.0",
-    "react": "19.1.0",
-    "react-native": "0.81.5"
+    "expo": "~58.0.23",
+    "expo-status-bar": "~58.0.0",
+    "react": "19.3.0",
+    "react-native": "0.88.1"
   },
   "devDependencies": {
-    "@types/react": "~19.1.0",
+    "@types/react": "~19.3.0",
     "eslint": "^9.0.0",
-    "eslint-config-expo": "~10.0.0",
+    "eslint-config-expo": "~58.0.0",
     "typescript": "~5.9.2"
   }
 }
