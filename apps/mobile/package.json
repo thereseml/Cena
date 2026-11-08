@@ -1,0 +1,29 @@
+{
+  "name": "@cena/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "dev": "expo start",
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "node -e \"console.log('No mobile tests configured yet')\""
+  },
+  "dependencies": {
+    "expo": "~58.0.23",
+    "expo-status-bar": "~58.0.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native": "0.88.1",
+    "react-native-web": "^0.21.4"
+  },
+  "devDependencies": {
+    "@types/react": "~19.3.0",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~58.0.0",
+    "typescript": "~6.0.3"
+  }
+}

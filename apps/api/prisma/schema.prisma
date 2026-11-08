@@ -1,0 +1,8 @@
+// Database models and migrations will be added after domain and tenancy decisions.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
