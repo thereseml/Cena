@@ -31,11 +31,12 @@ Verified with Node.js 24.22.1 and pnpm 10.20.0:
 - Built NestJS API startup and real `GET /health` response: HTTP 200, `{ "status": "ok" }`.
 - `pnpm --filter @cena/mobile exec pnpm dlx expo-doctor`: 18/18 checks passed.
 - `pnpm --filter @cena/mobile exec expo export --platform android --platform ios --output-dir /tmp/cena-mobile-export`: both platform bundles exported.
+- Mobile app visually checked in the simulator.
 - `pnpm --filter @cena/api db:validate` with a local placeholder URL: schema valid; no database connection tested.
 
 The API currently has one controller unit test. Mobile/contracts test scripts only report that no tests exist; a successful root test command does not imply mobile coverage. `pnpm build` builds only the API; the Expo export above verifies mobile bundling separately, not native installation or rendering.
 
-A phone/emulator smoke test remains required. No native iOS/Android build, Supabase connection, authentication or database operations have been tested. Prisma has no domain models yet; do not generate fake models just to run client generation. pnpm blocks dependency lifecycle scripts by default; review specific scripts before enabling them when database/client integration is added.
+The simulator visual check does not verify installation or behavior on a physical device. No standalone native iOS/Android build, Supabase connection, authentication or database operations have been tested. Prisma has no domain models yet; do not generate fake models just to run client generation. pnpm blocks dependency lifecycle scripts by default; review specific scripts before enabling them when database/client integration is added.
 
 Commit changes to dependency manifests together with `pnpm-lock.yaml`.
 
