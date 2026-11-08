@@ -15,6 +15,7 @@
 - `docs/blueprint.md` remains the preserved canonical original. The extracted documents are navigational copies, not new decisions.
 - For private-beta feature scope and priorities, follow the newer approved product decisions in `docs/mvp-scope.md` when they conflict with historical P0/P1 descriptions in `docs/blueprint.md` or extracted documents. For other conflicts, flag discrepancies and follow the original until a decision is recorded.
 - Keep P0, P1 and P2 distinctions intact; do not infer approval for open decisions.
+- For technical architecture, read `docs/adr/README.md` and relevant accepted ADRs. Accepted ADRs override conflicting proposed technical defaults in the historical blueprint. Deferred ADRs are **not** approved provider choices; implementation gates require explicit resolution.
 - Inspect the actual repository before assuming proposed architecture has been implemented.
 - Both Codex and OpenCode follow this same `AGENTS.md`; do not rely on tool-specific conversation memory.
 
@@ -65,7 +66,7 @@ When instructions conflict, follow:
 1. System and developer instructions from the execution environment.
 2. Explicit instructions from the current user.
 3. This `AGENTS.md`.
-4. `docs/mvp-scope.md` for approved beta scope, then `docs/blueprint.md` for other product/technical requirements.
+4. `docs/mvp-scope.md` for approved beta scope and accepted `docs/adr/` records for technical decisions; then `docs/blueprint.md` for remaining requirements.
 5. Existing repository conventions.
 
 Existing code describes the current implementation, not necessarily the intended product behavior.

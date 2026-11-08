@@ -1,0 +1,32 @@
+# Cena architecture decisions
+
+Architecture Decision Records (ADRs) capture **approved technical choices** independently of the preserved historical blueprint. Read [MVP scope](../mvp-scope.md) first for product priorities. These accepted ADRs supersede conflicting **proposed technical defaults** in [blueprint.md](../blueprint.md); do not rewrite that file.
+
+| ADR | Decision | Status |
+| --- | --- | --- |
+| [0001](0001-mobile-and-monorepo.md) | Expo / React Native / TypeScript; pnpm + Turborepo | Accepted |
+| [0002](0002-backend-and-api.md) | NestJS modular-monolith API | Accepted |
+| [0003](0003-database-and-orm.md) | Supabase PostgreSQL + Prisma | Accepted |
+| [0004](0004-authentication.md) | Supabase Auth | Accepted |
+| [0005](0005-ai-integration.md) | OpenAI API through NestJS | Accepted |
+| [0006](0006-hosting-deferred.md) | Hosting explicitly deferred | Deferred |
+
+## Implementation gates not yet approved
+
+The decisions above establish technology boundaries, **not** an executable deployment or complete security design. Before implementing affected features, document the following as follow-up ADRs or approved technical specifications:
+
+1. **Authorization and household lifecycle:** membership validation for every request; invitation link/email acceptance, expiry, revocation, roles and household deletion; cross-household isolation tests.
+2. **Database access and transactions:** migration ownership, Prisma connection pooling compatible with the selected Supabase connection method, tenant-scoped queries, idempotency and concurrent inventory updates.
+3. **Auth integration:** token verification/JWKS, session refresh, signup/invite flow, server trust boundary and Row Level Security policy (defense in depth if used).
+4. **AI contracts:** validated structured recognition and recipe schemas, image upload/privacy/retention, timeouts, rate limits, cost caps, safety/uncertainty UX and evaluation fixtures.
+5. **Operations:** API hosting, environments, secret management, deployment, backup/restore, observability and beta distribution before external beta.
+6. **API contracts:** typed REST client, error format, API versioning and concurrency semantics before frontend/backend parallel implementation.
+
+These are **open decisions**, not permission for agents to choose irreversible defaults silently. Block affected implementation until approved; independent scaffolding and tests may proceed. Prefer the smallest secure option consistent with [MVP scope](../mvp-scope.md).
+
+## Decision process
+
+- Accepted: explicitly approved by product owner; implement within stated boundaries.
+- Deferred: not selected; do not treat examples as decisions.
+- Proposed: requires approval before implementation where material.
+- Record supersession by a new ADR referencing the old one; preserve history.
