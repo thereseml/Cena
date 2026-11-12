@@ -5,6 +5,7 @@ dist/
 coverage/
 .expo/
 .expo-shared/
+**/.rnstorybook/storybook.requires.*
 *.tsbuildinfo
 .env
 .env.*
