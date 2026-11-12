@@ -32,7 +32,43 @@ pnpm storybook:ios   # Start Storybook and open the iOS simulator
 pnpm --filter @cena/mobile start  # Start the normal app
 ```
 
-Stories live beside their components in `packages/ui/src/*.stories.tsx` and are discovered by `apps/mobile/.rnstorybook/main.ts`. They import public components from `@cena/ui`, use local props only, and require no backend or authentication.
+Stories live beside their components and are discovered by `apps/mobile/.rnstorybook/main.ts`:
+
+- Shared primitives and patterns: `packages/ui/src/*.stories.tsx`.
+- App-specific product rows and previews: `apps/mobile/components/*.stories.tsx`.
+- Full Expo Router pages and the real tab menu: `apps/mobile/storybook/*.stories.tsx`.
+
+The app route stories mount the existing route tree in `ExpoRoot`; they do not recreate navigation for Storybook. All stories use local examples and need no backend or authentication.
+
+## Shared Components
+
+`@cena/ui` exports these reusable, product-independent components:
+
+| Component       | Responsibility                                                          |
+| --------------- | ----------------------------------------------------------------------- |
+| `ScreenHeader`  | Eyebrow, page title and optional trailing action.                       |
+| `SectionHeader` | Section title, optional description and action.                         |
+| `IconButton`    | Accessible icon-only action with subtle, filled and outline styles.     |
+| `ActionRow`     | Tappable title/description row composed on `ListItem`.                  |
+| `FilterChip`    | Controlled selectable filter; the owning screen handles filtering.      |
+| `StatCard`      | One or more compact statistics in a shared surface.                     |
+| `EmptyState`    | Empty-state title, description, optional icon and composed action.      |
+| `ListItem`      | Shared row layout with optional leading/trailing content and separator. |
+| `Badge`         | Neutral, success, warning and error status labels.                      |
+
+Product-specific `InventoryItemRow`, `ShoppingListItem` and `RecipePreview` remain in `apps/mobile/components` and compose these primitives. Keep inventory and recipe domain data out of `packages/ui`.
+
+Example:
+
+```tsx
+<ActionRow
+  title="Lägg till mat"
+  description="Håll koll på det du har hemma"
+  leadingIcon={<Plus size={20} />}
+  trailingIcon={<ArrowRight size={18} />}
+  onPress={openAddProduct}
+/>
+```
 
 ## Add a Component
 
@@ -43,7 +79,7 @@ Stories live beside their components in `packages/ui/src/*.stories.tsx` and are 
 
 ## Add a Story
 
-Create `ComponentName.stories.tsx` beside the component. Use CSF types from `@storybook/react-native`, import the component from `@cena/ui`, and add it to the existing `Primitives/...` catalog. Keep examples deterministic and independent of application services.
+Create `ComponentName.stories.tsx` beside the component. Use CSF types from `@storybook/react-native`, import shared primitives from `@cena/ui`, and group stories under `Actions`, `Data Display`, `Feedback` or `Navigation`. Feature-component stories stay beside their component; route stories live under `apps/mobile/storybook` and mount the real route tree. Keep examples deterministic and independent of application services.
 
 ## Verification
 
@@ -61,4 +97,4 @@ Run only the component suite with `pnpm --filter @cena/mobile test`.
 
 - Storybook's on-device UI is intended for native iOS/Android development. Storybook Web is not configured; primitives remain usable in Expo Web.
 - DM Sans assets are bundled in the Expo Google Fonts package and loaded before both the normal app and Storybook render.
-- The mobile app is currently a small foundation shell; these primitives are not yet integrated into product screens.
+- The mobile app uses Expo Router with four primary tabs (Home, Kitchen, Recipes and Shopping), plus stack routes for profile/settings, adding a product and recipe details. Routes live under `apps/mobile/app`; the tab shell is `app/(tabs)/_layout.tsx`. `TabScreen` provides safe-area handling. Shared primitives are imported from `@cena/ui`; product rows/previews remain under `apps/mobile/components`. Typed mock data lives in `apps/mobile/data` and is not persisted. Account, household, inventory editing, recipe generation and shared shopping are not connected yet. Start the normal app with `pnpm --filter @cena/mobile start`; Storybook remains opt-in with `pnpm storybook`.

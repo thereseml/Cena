@@ -4,8 +4,19 @@ import { View } from 'react-native';
 
 const preview: Preview = {
   decorators: [
-    (Story) => (
-      <View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: colors.background.primary }}>
+    (Story, context) => (
+      <View
+        style={
+          context.parameters.layout === 'fullscreen'
+            ? { flex: 1, backgroundColor: colors.background.primary }
+            : {
+                flex: 1,
+                justifyContent: 'center',
+                padding: 24,
+                backgroundColor: colors.background.primary,
+              }
+        }
+      >
         <Story />
       </View>
     ),
