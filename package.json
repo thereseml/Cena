@@ -4,6 +4,8 @@
   "packageManager": "pnpm@10.20.0",
   "scripts": {
     "dev": "turbo run dev",
+    "storybook": "pnpm --filter @cena/mobile storybook",
+    "storybook:ios": "pnpm --filter @cena/mobile storybook:ios",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
