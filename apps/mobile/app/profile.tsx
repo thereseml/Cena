@@ -1,10 +1,14 @@
 import { router } from 'expo-router';
 import { ArrowLeft, CircleUserRound, House, Info } from 'lucide-react-native';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, spacing, Text } from '@cena/ui';
+import { Button, colors, spacing, Text } from '@cena/ui';
+import { useAuth } from '../features/auth/AuthProvider';
 
 export default function ProfileScreen() {
+  const { profile, signOut } = useAuth();
+  const household = profile?.households[0];
+
   return (
     <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -28,7 +32,7 @@ export default function ProfileScreen() {
           <House size={20} color={colors.brand.primary} strokeWidth={1.8} />
           <View style={styles.rowCopy}>
             <Text variant="label">Ditt hushåll</Text>
-            <Text variant="bodySmall">Hushållsinformation är inte tillgänglig ännu.</Text>
+            <Text variant="bodySmall">{household?.name ?? 'Du tillhör inget hushåll ännu.'}</Text>
           </View>
         </View>
 
@@ -38,10 +42,19 @@ export default function ProfileScreen() {
         <View style={styles.settingRow}>
           <CircleUserRound size={20} color={colors.brand.primary} strokeWidth={1.8} />
           <View style={styles.rowCopy}>
-            <Text variant="label">Kontoinställningar</Text>
-            <Text variant="bodySmall">Konton och inloggning kommer senare.</Text>
+            <Text variant="label">{profile?.email ?? 'Ditt konto'}</Text>
+            <Text variant="bodySmall">Inloggad med engångskod via e-post.</Text>
           </View>
         </View>
+
+        <Button
+          label="Logga ut"
+          variant="outline"
+          onPress={() => {
+            void signOut().catch(() => Alert.alert('Kunde inte logga ut', 'Försök igen.'));
+          }}
+          style={styles.signOut}
+        />
 
         <Text variant="caption" style={styles.sectionLabel}>
           OM CENA
@@ -78,4 +91,5 @@ const styles = StyleSheet.create({
   },
   rowCopy: { flex: 1, gap: spacing.xs },
   version: { color: colors.text.muted },
+  signOut: { marginTop: spacing.xl },
 });

@@ -10,6 +10,7 @@ Architecture Decision Records (ADRs) capture **approved technical choices** inde
 | [0004](0004-authentication.md) | Supabase Auth | Accepted |
 | [0005](0005-ai-integration.md) | OpenAI API through NestJS | Accepted |
 | [0006](0006-hosting-deferred.md) | Hosting explicitly deferred | Deferred |
+| [0007](0007-auth-and-household-foundation.md) | Email OTP, JWKS verification and idempotent household bootstrap | Accepted |
 
 ## Implementation gates not yet approved
 

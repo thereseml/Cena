@@ -1,2 +1,11 @@
-// Shared, platform-safe contracts will live here once API contracts are approved.
-export {};
+export interface HouseholdSummary {
+  id: string;
+  name: string;
+  role: 'OWNER' | 'MEMBER';
+}
+
+export interface CurrentUser {
+  id: string;
+  email: string;
+  households: HouseholdSummary[];
+}

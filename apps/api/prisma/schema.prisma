@@ -1,8 +1,49 @@
-// Database models and migrations will be added after domain and tenancy decisions.
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum HouseholdRole {
+  OWNER
+  MEMBER
+}
+
+model User {
+  id                    String           @id @default(uuid()) @db.Uuid
+  supabaseAuthId        String           @unique @map("supabase_auth_id") @db.Uuid
+  email                 String
+  provisioningCompleted Boolean          @default(false) @map("provisioning_completed")
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+  memberships           HouseholdMember[]
+
+  @@map("users")
+}
+
+model Household {
+  id        String            @id @default(uuid()) @db.Uuid
+  name      String
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+  members   HouseholdMember[]
+
+  @@map("households")
+}
+
+model HouseholdMember {
+  id          String        @id @default(uuid()) @db.Uuid
+  householdId String        @map("household_id") @db.Uuid
+  userId      String        @map("user_id") @db.Uuid
+  role        HouseholdRole @default(MEMBER)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  household   Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([householdId, userId])
+  @@index([userId])
+  @@index([householdId])
+  @@map("household_members")
 }
