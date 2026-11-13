@@ -45,7 +45,7 @@ export function getExpiryLabel(batch: InventoryBatch, now = new Date()): ExpiryL
 export function isUseSoon(batch: InventoryBatch, now = new Date()): boolean {
   if (!batch.expiryDate) return false;
   const daysRemaining = calendarDayNumber(batch.expiryDate) - localCalendarDayNumber(now);
-  return daysRemaining <= USE_SOON_DAYS;
+  return daysRemaining >= 0 && daysRemaining <= USE_SOON_DAYS;
 }
 
 function calendarDayNumber(value: string): number {

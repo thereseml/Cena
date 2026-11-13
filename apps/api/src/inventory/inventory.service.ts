@@ -75,9 +75,9 @@ export class InventoryService {
     value: unknown,
     requestKey: unknown,
   ): Promise<InventoryItemContract> {
+    await this.authorizeHousehold(user.id, householdId);
     const input = parseInventoryInput(value);
     const createRequestId = parseIdempotencyKey(requestKey);
-    await this.authorizeHousehold(user.id, householdId);
     const replay = await this.findCreateReplay(householdId, createRequestId);
     if (replay) return this.returnCreateReplay(replay, input);
 
@@ -143,9 +143,9 @@ export class InventoryService {
     itemId: string,
     value: unknown,
   ): Promise<InventoryItemContract> {
+    await this.authorizeHousehold(user.id, householdId);
     const input = parseInventoryInput(value, { allowEstimated: true });
     const expectedVersion = parseExpectedVersion(value);
-    await this.authorizeHousehold(user.id, householdId);
     return this.prisma.$transaction(async (transaction) => {
       const existing = await transaction.inventoryItem.findFirst({
         where: { id: itemId, householdId, archivedAt: null },
@@ -244,8 +244,8 @@ export class InventoryService {
     itemId: string,
     value: unknown,
   ): Promise<void> {
-    const expectedVersion = parseExpectedVersion(value);
     await this.authorizeHousehold(user.id, householdId);
+    const expectedVersion = parseExpectedVersion(value);
     await this.prisma.$transaction(async (transaction) => {
       const item = await transaction.inventoryItem.findFirst({
         where: { id: itemId, householdId, archivedAt: null },

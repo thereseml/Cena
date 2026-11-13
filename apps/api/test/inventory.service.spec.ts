@@ -170,6 +170,39 @@ describe('InventoryService', () => {
     expect(database.prisma.inventoryItem.findMany).not.toHaveBeenCalled();
   });
 
+  it('authorizes the household before validating a create payload', async () => {
+    const database = createDatabase();
+    database.prisma.householdMember.findUnique.mockResolvedValue(null);
+    const service = new InventoryService(database.prisma as never);
+
+    await expect(service.create(user, householdId, null, undefined)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(database.prisma.inventoryItem.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('authorizes the household before validating an update payload', async () => {
+    const database = createDatabase();
+    database.prisma.householdMember.findUnique.mockResolvedValue(null);
+    const service = new InventoryService(database.prisma as never);
+
+    await expect(service.update(user, householdId, itemId, null)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(database.prisma.inventoryItem.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('authorizes the household before validating a remove payload', async () => {
+    const database = createDatabase();
+    database.prisma.householdMember.findUnique.mockResolvedValue(null);
+    const service = new InventoryService(database.prisma as never);
+
+    await expect(service.remove(user, householdId, itemId, null)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(database.prisma.inventoryItem.findFirst).not.toHaveBeenCalled();
+  });
+
   it('returns not found for an item outside the requested household', async () => {
     const database = createDatabase();
     database.prisma.inventoryItem.findFirst.mockResolvedValue(null);

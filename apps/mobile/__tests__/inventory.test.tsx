@@ -261,6 +261,7 @@ describe('expiry labels', () => {
     };
     expect(isUseSoon(estimate, now)).toBe(true);
     expect(getExpiryLabel(estimate, now)?.text).toBe('Uppskattat datum närmar sig');
+    expect(isUseSoon({ ...estimate, expiryDate: '2026-11-12' }, now)).toBe(false);
     expect(
       getExpiryLabel({ ...estimate, expiryDate: null, expiryType: null, expirySource: null }, now),
     ).toBeNull();

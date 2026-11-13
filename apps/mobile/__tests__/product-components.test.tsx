@@ -37,6 +37,20 @@ describe('product list components', () => {
     expect(getByText('Bäst före 14 nov.')).toBeTruthy();
   });
 
+  it('shows the label for the earliest-expiring batch', async () => {
+    const item: InventoryItem = {
+      ...milk,
+      batches: [
+        { ...milk.batches[0], id: 'later', expiryDate: '2030-11-20' },
+        { ...milk.batches[0], id: 'earlier', expiryDate: '2030-11-14' },
+      ],
+    };
+    const { getByText, queryByText } = await render(<InventoryItemRow item={item} />);
+
+    expect(getByText('Bäst före 14 nov.')).toBeTruthy();
+    expect(queryByText('Bäst före 20 nov.')).toBeNull();
+  });
+
   it('announces shopping checkbox state and invokes the toggle handler', async () => {
     const onToggle = jest.fn();
     const { getByRole } = await render(

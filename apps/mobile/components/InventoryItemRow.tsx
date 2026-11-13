@@ -11,16 +11,10 @@ export interface InventoryItemRowProps {
 const LOCATION_LABELS = { FRIDGE: 'Kylskåp', FREEZER: 'Frys', PANTRY: 'Skafferi' } as const;
 
 export function InventoryItemRow({ item, onPress }: InventoryItemRowProps) {
-  const expiry = item.batches
-    .map((batch) => getExpiryLabel(batch))
-    .filter((label) => label !== null)
-    .sort((left, right) => {
-      if (left.urgency === 'passed') return -1;
-      if (right.urgency === 'passed') return 1;
-      if (left.urgency === 'soon') return -1;
-      if (right.urgency === 'soon') return 1;
-      return 0;
-    })[0];
+  const earliestExpiryBatch = item.batches
+    .filter((batch) => batch.expiryDate !== null && batch.expiryType !== null)
+    .sort((left, right) => (left.expiryDate ?? '').localeCompare(right.expiryDate ?? ''))[0];
+  const expiry = earliestExpiryBatch ? getExpiryLabel(earliestExpiryBatch) : null;
 
   return (
     <ListItem
