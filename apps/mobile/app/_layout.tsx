@@ -3,9 +3,9 @@ import { DMSans_400Regular } from '@expo-google-fonts/dm-sans/400Regular';
 import { DMSans_500Medium } from '@expo-google-fonts/dm-sans/500Medium';
 import { DMSans_600SemiBold } from '@expo-google-fonts/dm-sans/600SemiBold';
 import { DMSans_700Bold } from '@expo-google-fonts/dm-sans/700Bold';
-import { colors } from '@cena/ui';
-import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { AuthProvider } from '../features/auth/AuthProvider';
+import { AuthRouter } from '../features/auth/AuthRouter';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -18,19 +18,9 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <>
+    <AuthProvider>
       <StatusBar style="dark" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.background.primary },
-        }}
-      >
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="profile" />
-        <Stack.Screen name="add-product" />
-        <Stack.Screen name="recipe/[id]" />
-      </Stack>
-    </>
+      <AuthRouter />
+    </AuthProvider>
   );
 }
