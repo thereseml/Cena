@@ -1,13 +1,30 @@
 import { router } from 'expo-router';
-import { ArrowLeft, Camera, Keyboard } from 'lucide-react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, colors, spacing, Text } from '@cena/ui';
+import { useAuth } from '../features/auth/AuthProvider';
+import { InventoryItemForm } from '../features/inventory/InventoryItemForm';
+import type { SaveInventoryItemInput } from '@cena/contracts';
+import { apiRequest } from '../lib/api';
 
 export default function AddProductScreen() {
+  const { profile } = useAuth();
+  const householdId = profile?.households[0]?.id;
+
+  async function addItem(input: SaveInventoryItemInput, requestKey: string): Promise<void> {
+    if (!householdId) throw new Error('Ditt hushåll kunde inte hittas.');
+    await apiRequest(`households/${householdId}/inventory`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+      headers: { 'Idempotency-Key': requestKey },
+    });
+    router.replace('/(tabs)/kitchen');
+  }
+
   return (
     <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Pressable
           onPress={() => router.back()}
           accessibilityRole="button"
@@ -19,36 +36,21 @@ export default function AddProductScreen() {
         <Text variant="h1" style={styles.title}>
           Lägg till mat
         </Text>
-        <Text style={styles.intro}>
-          Snart kan du lägga in varor manuellt eller ta en bild. Inget sparas i den här
-          förhandsvisningen.
-        </Text>
-
-        <View style={styles.option}>
-          <Keyboard size={22} color={colors.brand.primary} strokeWidth={1.8} />
-          <View style={styles.optionCopy}>
-            <Text variant="h3" style={styles.optionTitle}>
-              Skriv in en vara
+        <Text style={styles.intro}>Skriv in det du vill hålla koll på i ditt kök.</Text>
+        {!householdId ? (
+          <View style={styles.feedback}>
+            <Text accessibilityRole="alert">
+              Ditt hushåll kunde inte hittas. Försök logga in igen.
             </Text>
-            <Text variant="bodySmall">Manuell registrering kommer senare.</Text>
+            <Button
+              label="Tillbaka till mitt kök"
+              variant="outline"
+              onPress={() => router.back()}
+            />
           </View>
-        </View>
-        <View style={styles.option}>
-          <Camera size={22} color={colors.brand.primary} strokeWidth={1.8} />
-          <View style={styles.optionCopy}>
-            <Text variant="h3" style={styles.optionTitle}>
-              Ta en bild
-            </Text>
-            <Text variant="bodySmall">Kamerafunktionen finns inte ännu.</Text>
-          </View>
-        </View>
-
-        <Button
-          label="Tillbaka till mitt kök"
-          variant="secondary"
-          onPress={() => router.replace('/(tabs)/kitchen')}
-          style={styles.returnButton}
-        />
+        ) : (
+          <InventoryItemForm saveLabel="Lägg till vara" onSave={addItem} />
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -60,15 +62,5 @@ const styles = StyleSheet.create({
   backButton: { width: 48, height: 48, justifyContent: 'center' },
   title: { color: colors.brand.primary, marginTop: spacing.md },
   intro: { lineHeight: 24, marginTop: spacing.sm, marginBottom: spacing.xl },
-  option: {
-    minHeight: 92,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.base,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  optionCopy: { flex: 1, gap: spacing.xs },
-  optionTitle: { color: colors.brand.primary },
-  returnButton: { alignSelf: 'flex-start', marginTop: spacing.xl },
+  feedback: { alignItems: 'center', gap: spacing.md },
 });

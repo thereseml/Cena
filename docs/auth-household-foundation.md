@@ -94,4 +94,4 @@ The API's health endpoint is `GET /health`. Authenticated API endpoints require 
 - Numeric email delivery requires the Supabase dashboard template, suitable SMTP for test recipients, and Auth settings above. No live Supabase project was configured for this change, so delivery, deliverability and end-to-end verification have not been tested.
 - JWT verification requires an asymmetric Supabase signing key and a reachable JWKS endpoint. Legacy symmetric signing keys require a separately reviewed verifier change.
 - Migrations are local/version-controlled; hosted migration deployment, backups and production operations remain deferred.
-- There are no invitations, household switching/management, RLS policies, account deletion, rate limiting at the API, or real inventory/recipe connections. Existing feature data remains clearly labeled mock data.
+- There are no invitations, household switching/management, RLS policies, account deletion, or rate limiting at the API. Recipe and shopping features remain mock data; the household inventory implementation is documented in [inventory.md](inventory.md).
