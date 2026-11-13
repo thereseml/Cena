@@ -213,6 +213,8 @@ Before creating a new shared component, inspect the existing UI library.
 
 Do not recreate shared buttons, text styles, inputs or cards in individual screens.
 
+Before composing a screen, inspect `packages/ui` and its Storybook stories, then reuse the existing component implementations through `@cena/ui` wherever they fit. Storybook stories document and demonstrate components; never import a story into application runtime or copy its example markup as a replacement for the component. Create a new component only when the existing library does not meet the need, and add a story for a new or significantly changed reusable visual component.
+
 ### Feature-specific components
 
 Keep feature-specific components close to their owning feature, following the existing mobile application structure.

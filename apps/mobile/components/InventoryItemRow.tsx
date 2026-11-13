@@ -1,26 +1,46 @@
+import type { InventoryItem } from '@cena/contracts';
 import { Badge, ListItem, colors, spacing, Text } from '@cena/ui';
 import { StyleSheet, View } from 'react-native';
-import type { KitchenProduct } from '../data/mockData';
+import { getExpiryLabel } from '../features/inventory/expiry';
 
 export interface InventoryItemRowProps {
-  product: KitchenProduct;
+  item: InventoryItem;
+  onPress?: () => void;
 }
 
-export function InventoryItemRow({ product }: InventoryItemRowProps) {
+const LOCATION_LABELS = { FRIDGE: 'Kylskåp', FREEZER: 'Frys', PANTRY: 'Skafferi' } as const;
+
+export function InventoryItemRow({ item, onPress }: InventoryItemRowProps) {
+  const earliestExpiryBatch = item.batches
+    .filter((batch) => batch.expiryDate !== null && batch.expiryType !== null)
+    .sort((left, right) => (left.expiryDate ?? '').localeCompare(right.expiryDate ?? ''))[0];
+  const expiry = earliestExpiryBatch ? getExpiryLabel(earliestExpiryBatch) : null;
+
   return (
     <ListItem
-      trailing={product.expiringSoon ? <Badge label="Använd snart" variant="warning" /> : undefined}
+      onPress={onPress}
+      trailing={
+        expiry && expiry.urgency !== 'none' ? (
+          <Badge
+            label={expiry.urgency === 'passed' ? 'Datum passerat' : 'Använd snart'}
+            variant={expiry.urgency === 'passed' ? 'error' : 'warning'}
+          />
+        ) : undefined
+      }
     >
       <View style={styles.content}>
         <Text variant="h3" style={styles.name}>
-          {product.name}
+          {item.name}
         </Text>
         <Text variant="bodySmall">
-          {product.quantity} · {product.location}
+          {formatQuantity(item.quantity)} {item.unit} · {LOCATION_LABELS[item.storageLocation]}
         </Text>
-        {product.expires ? (
-          <Text variant="caption" style={product.expiringSoon ? styles.expiring : styles.expiry}>
-            {product.expires}
+        {expiry ? (
+          <Text
+            variant="caption"
+            style={expiry.urgency === 'none' ? styles.expiry : styles.expiring}
+          >
+            {expiry.text}
           </Text>
         ) : null}
       </View>
@@ -34,3 +54,7 @@ const styles = StyleSheet.create({
   expiry: { color: colors.text.muted },
   expiring: { color: colors.semantic.warning },
 });
+
+function formatQuantity(quantity: number): string {
+  return new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 3 }).format(quantity);
+}

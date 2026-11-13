@@ -15,10 +15,15 @@ import {
 } from '@cena/ui';
 import { RecipePreview } from '../../components/RecipePreview';
 import { TabScreen } from '../../components/TabScreen';
-import { MOCK_PRODUCTS, MOCK_RECIPES } from '../../data/mockData';
+import { MOCK_RECIPES } from '../../data/mockData';
+import { useHouseholdInventory } from '../../features/inventory/useHouseholdInventory';
+import { isUseSoon } from '../../features/inventory/expiry';
 
 export default function HomeScreen() {
-  const expiringCount = MOCK_PRODUCTS.filter((product) => product.expiringSoon).length;
+  const { items, loading, error, retry } = useHouseholdInventory();
+  const expiringCount = items.filter((item) =>
+    item.batches.some((batch) => isUseSoon(batch)),
+  ).length;
 
   return (
     <TabScreen>
@@ -56,11 +61,19 @@ export default function HomeScreen() {
             />
           }
           items={[
-            { value: MOCK_PRODUCTS.length, label: 'varor hemma' },
-            { value: expiringCount, label: 'att använda snart' },
+            { value: loading || error ? '—' : items.length, label: 'varor hemma' },
+            { value: loading || error ? '—' : expiringCount, label: 'att använda snart' },
           ]}
-          note="Exempel på hur ditt kök kan se ut."
+          note={error ?? (loading ? 'Läser in ditt sparade kök…' : 'Från ditt sparade kök.')}
         />
+        {error ? (
+          <Button
+            label="Försök läsa in köket igen"
+            variant="outline"
+            onPress={retry}
+            style={styles.retry}
+          />
+        ) : null}
 
         <View style={styles.section}>
           <SectionHeader title="Små saker, stor skillnad" />
@@ -85,7 +98,7 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <SectionHeader
             title="Till kvällens middag"
-            description="Förslag utifrån exempelvarorna i ditt kök"
+            description="Förslag utifrån exempelvaror"
             trailing={
               <IconButton
                 icon={<ArrowRight size={20} color={colors.brand.primary} strokeWidth={1.8} />}
@@ -123,6 +136,7 @@ const styles = StyleSheet.create({
   greeting: { color: colors.brand.primary, marginBottom: spacing.xs },
   intro: { maxWidth: 300, lineHeight: 24, marginBottom: spacing.lg },
   primaryAction: { alignSelf: 'flex-start', paddingHorizontal: spacing.lg },
+  retry: { alignSelf: 'flex-start', marginTop: spacing.sm },
   section: { marginTop: spacing.xl },
   suggestionNote: {
     flexDirection: 'row',
