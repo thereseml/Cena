@@ -10,8 +10,10 @@ import HomeScreen from '../app/(tabs)/index';
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('lucide-react-native', () => ({
   ArrowRight: () => null,
+  Camera: () => null,
   Clock3: () => null,
   Plus: () => null,
+  Search: () => null,
   ShoppingBasket: () => null,
   Sparkles: () => null,
   UserRound: () => null,
@@ -85,13 +87,30 @@ describe('KitchenScreen', () => {
     });
 
     const { getByText } = await render(<KitchenScreen />);
-    fireEvent.press(getByText('Lägg till mat'));
+    fireEvent.press(getByText('Lägg till vara'));
 
     expect(getByText('Ditt kök är tomt')).toBeTruthy();
     expect(
       getByText('Lägg till din första vara så hjälper Cena dig hålla koll på vad du har hemma.'),
     ).toBeTruthy();
     expect(router.push).toHaveBeenCalledWith('/add-product');
+  });
+
+  it('groups manual and photo actions and opens the photo flow', async () => {
+    const { getByText } = await render(<KitchenScreen />);
+
+    expect(getByText('Lägg till vara')).toBeTruthy();
+    await fireEvent.press(getByText('Med foto'));
+
+    expect(router.push).toHaveBeenCalledWith('/photo-recognition');
+  });
+
+  it('keeps the profile action available alongside the count and grouped kitchen actions', async () => {
+    const { getByLabelText, getByRole } = await render(<KitchenScreen />);
+
+    expect(getByLabelText('Öppna profil och inställningar')).toBeTruthy();
+    expect(getByRole('button', { name: 'Lägg till vara' })).toBeTruthy();
+    expect(getByRole('button', { name: 'Med foto' })).toBeTruthy();
   });
 
   it('shows an error and retries instead of falling back to sample inventory', async () => {
@@ -126,6 +145,13 @@ describe('KitchenScreen', () => {
 
     expect(getByText('Pasta')).toBeTruthy();
     expect(queryByText('Mjölk')).toBeNull();
+  });
+
+  it('uses a compact, accessibly named search field', async () => {
+    const { getByLabelText, queryByText } = await render(<KitchenScreen />);
+
+    expect(getByLabelText('Sök i ditt kök')).toBeTruthy();
+    expect(queryByText('Sök i ditt kök')).toBeNull();
   });
 });
 

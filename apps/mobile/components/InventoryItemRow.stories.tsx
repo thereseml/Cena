@@ -25,7 +25,7 @@ const item: InventoryItem = {
 const meta = {
   title: 'Product/InventoryItemRow',
   component: InventoryItemRow,
-  args: { item },
+  args: { item, onPress: () => undefined },
 } satisfies Meta<typeof InventoryItemRow>;
 
 export default meta;

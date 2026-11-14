@@ -45,7 +45,11 @@ export async function bootstrapProfile(session: Session): Promise<CurrentUser> {
   return (await response.json()) as CurrentUser;
 }
 
-export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function apiRequest<T>(
+  path: string,
+  init: RequestInit = {},
+  requestFetch: typeof fetch = fetch,
+): Promise<T> {
   const apiBaseUrl = process.env.EXPO_PUBLIC_API_URL;
   if (!apiBaseUrl) throw new ApiRequestError('configuration');
 
@@ -54,11 +58,12 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
 
   let response: Response;
   try {
-    response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/${path.replace(/^\//, '')}`, {
+    const isJsonBody = typeof init.body === 'string';
+    response = await requestFetch(`${apiBaseUrl.replace(/\/$/, '')}/${path.replace(/^\//, '')}`, {
       ...init,
       headers: {
         Accept: 'application/json',
-        ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(isJsonBody ? { 'Content-Type': 'application/json' } : {}),
         ...init.headers,
         Authorization: `Bearer ${data.session.access_token}`,
       },
@@ -102,10 +107,15 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
 
 export function apiErrorMessage(error: unknown, fallback: string): string {
   if (!(error instanceof ApiRequestError)) return fallback;
+  if (error.status === 413) return 'Bilden är för stor. Välj en mindre bild och försök igen.';
   if (error.apiMessage) return error.apiMessage;
   if (error.reason === 'configuration') return 'API-adressen saknas i appens konfiguration.';
   if (error.reason === 'network')
-    return 'Det gick inte att nå Cena. Kontrollera din internetanslutning.';
+    return 'Det gick inte att nå Cena API:t. Kontrollera att appens API-adress kan nås från telefonen.';
   if (error.reason === 'unauthorized') return 'Din inloggning har gått ut. Logga in igen.';
+  if (error.status === 429) return 'Du har gjort många bildförsök. Försök igen senare.';
+  if (error.status === 503)
+    return 'Bildigenkänningen är tillfälligt otillgänglig. Försök igen senare eller lägg till varorna manuellt.';
+  if (error.status === 504) return 'Bildigenkänningen tog för lång tid. Försök igen.';
   return 'Något gick fel. Försök igen.';
 }

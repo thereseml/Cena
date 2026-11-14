@@ -51,6 +51,7 @@ function createDatabase() {
     inventoryItem: {
       create: jest.fn().mockResolvedValue({ ...item, product: { name: 'Mjölk' } }),
       findFirst: jest.fn().mockResolvedValue(item),
+      findMany: jest.fn().mockResolvedValue([item]),
       updateMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
     productBatch: { update: jest.fn().mockResolvedValue(batch) },
@@ -110,6 +111,60 @@ describe('InventoryService', () => {
         unit: InventoryUnit.LITER,
       }),
     });
+  });
+
+  it('creates a bulk inventory request in one transaction', async () => {
+    const database = createDatabase();
+    database.prisma.inventoryItem.findMany.mockResolvedValue([]);
+    database.transaction.inventoryItem.create
+      .mockResolvedValueOnce({ ...item, product: { name: 'Mjölk' } })
+      .mockResolvedValueOnce({
+        ...item,
+        id: '00000000-0000-4000-8000-000000000004',
+        batches: [{ ...batch, id: '00000000-0000-4000-8000-000000000005' }],
+        product: { name: 'Ägg' },
+      });
+    const service = new InventoryService(database.prisma as never);
+    const entries = [
+      input,
+      {
+        ...input,
+        name: 'Ägg',
+        quantity: 6,
+        unit: 'st',
+        expiryDate: null,
+        expiryType: null,
+        expirySource: null,
+      },
+    ];
+
+    const result = await service.createMany(
+      user,
+      householdId,
+      { items: entries },
+      'recognition:request-123',
+    );
+
+    expect(result).toHaveLength(2);
+    expect(database.prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(database.transaction.inventoryItem.create).toHaveBeenCalledTimes(2);
+    expect(database.transaction.inventoryEvent.create).toHaveBeenCalledTimes(2);
+  });
+
+  it('replays a complete bulk create without creating duplicate inventory events', async () => {
+    const database = createDatabase();
+    database.prisma.inventoryItem.findMany.mockImplementation(async ({ where }) => {
+      const requestIds = where.createRequestId.in as string[];
+      return requestIds.map((createRequestId) => ({ ...item, createRequestId }));
+    });
+    const service = new InventoryService(database.prisma as never);
+
+    await expect(
+      service.createMany(user, householdId, { items: [input] }, 'recognition:request-123'),
+    ).resolves.toHaveLength(1);
+
+    expect(database.prisma.$transaction).not.toHaveBeenCalled();
+    expect(database.transaction.inventoryEvent.create).not.toHaveBeenCalled();
   });
 
   it('returns the original result for a duplicate add request without recording another event', async () => {

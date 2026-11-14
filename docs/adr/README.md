@@ -2,15 +2,16 @@
 
 Architecture Decision Records (ADRs) capture **approved technical choices** independently of the preserved historical blueprint. Read [MVP scope](../mvp-scope.md) first for product priorities. These accepted ADRs supersede conflicting **proposed technical defaults** in [blueprint.md](../blueprint.md); do not rewrite that file.
 
-| ADR | Decision | Status |
-| --- | --- | --- |
-| [0001](0001-mobile-and-monorepo.md) | Expo / React Native / TypeScript; pnpm + Turborepo | Accepted |
-| [0002](0002-backend-and-api.md) | NestJS modular-monolith API | Accepted |
-| [0003](0003-database-and-orm.md) | Supabase PostgreSQL + Prisma | Accepted |
-| [0004](0004-authentication.md) | Supabase Auth | Accepted |
-| [0005](0005-ai-integration.md) | OpenAI API through NestJS | Accepted |
-| [0006](0006-hosting-deferred.md) | Hosting explicitly deferred | Deferred |
+| ADR                                           | Decision                                                        | Status   |
+| --------------------------------------------- | --------------------------------------------------------------- | -------- |
+| [0001](0001-mobile-and-monorepo.md)           | Expo / React Native / TypeScript; pnpm + Turborepo              | Accepted |
+| [0002](0002-backend-and-api.md)               | NestJS modular-monolith API                                     | Accepted |
+| [0003](0003-database-and-orm.md)              | Supabase PostgreSQL + Prisma                                    | Accepted |
+| [0004](0004-authentication.md)                | Supabase Auth                                                   | Accepted |
+| [0005](0005-ai-integration.md)                | OpenAI API through NestJS for general/recipe AI integrations    | Accepted |
+| [0006](0006-hosting-deferred.md)              | Hosting explicitly deferred                                     | Deferred |
 | [0007](0007-auth-and-household-foundation.md) | Email OTP, JWKS verification and idempotent household bootstrap | Accepted |
+| [0008](0008-food-recognition-provider.md)     | Cloudflare Workers AI for food photo recognition                | Accepted |
 
 ## Implementation gates not yet approved
 

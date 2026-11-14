@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Plus, UserRound } from 'lucide-react-native';
+import { Camera, Plus, Search, UserRound } from 'lucide-react-native';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import {
   Button,
@@ -40,10 +40,11 @@ export default function KitchenScreen() {
 
   return (
     <TabScreen>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <ScreenHeader
           title="Mitt kök"
           eyebrow={eyebrow}
+          style={styles.screenHeader}
           trailing={
             <IconButton
               icon={<UserRound size={21} color={colors.brand.primary} strokeWidth={1.8} />}
@@ -52,26 +53,34 @@ export default function KitchenScreen() {
             />
           }
         />
-        <View style={styles.introRow}>
-          <Text style={styles.intro}>En överblick över det du har hemma.</Text>
-          <IconButton
-            icon={<Plus size={21} color={colors.text.inverse} strokeWidth={1.9} />}
-            variant="filled"
-            accessibilityLabel="Lägg till mat"
+        <View style={styles.actions}>
+          <Button
+            label="Lägg till vara"
+            leadingIcon={<Plus size={18} color={colors.text.inverse} strokeWidth={1.9} />}
             onPress={() => router.push('/add-product')}
+            style={styles.actionButton}
+          />
+          <Button
+            label="Med foto"
+            variant="secondary"
+            leadingIcon={<Camera size={18} color={colors.brand.primary} strokeWidth={1.8} />}
+            onPress={() => router.push('/photo-recognition')}
+            style={styles.actionButton}
           />
         </View>
 
-        <Input
-          label="Sök i ditt kök"
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Sök efter mat"
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType="search"
-          style={styles.search}
-        />
+        <View style={styles.searchArea}>
+          <Input
+            accessibilityLabel="Sök i ditt kök"
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Sök efter mat..."
+            leadingIcon={<Search size={18} color={colors.text.muted} strokeWidth={1.8} />}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
+          />
+        </View>
 
         <ScrollView
           horizontal
@@ -84,6 +93,7 @@ export default function KitchenScreen() {
               label={location}
               selected={selectedLocation === location}
               onPress={() => setSelectedLocation(location)}
+              style={styles.filterChip}
             />
           ))}
         </ScrollView>
@@ -110,7 +120,6 @@ export default function KitchenScreen() {
             <EmptyState
               title="Ditt kök är tomt"
               description="Lägg till din första vara så hjälper Cena dig hålla koll på vad du har hemma."
-              action={<Button label="Lägg till mat" onPress={() => router.push('/add-product')} />}
             />
           ) : products.length === 0 ? (
             <EmptyState
@@ -143,12 +152,14 @@ function getInventoryCountLabel(count: number, loading: boolean, error: string |
 }
 
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.xxl },
-  introRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  intro: { flex: 1, fontSize: 16, lineHeight: 24 },
-  search: { marginTop: spacing.base },
-  filters: { gap: spacing.sm, paddingVertical: spacing.lg },
-  productList: { borderTopWidth: 1, borderTopColor: colors.border },
-  feedback: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xxl },
+  content: { paddingHorizontal: spacing.lg, paddingTop: spacing.xs, paddingBottom: spacing.xxl },
+  screenHeader: { marginBottom: spacing.md },
+  actions: { flexDirection: 'row', gap: spacing.sm },
+  actionButton: { flex: 1, minWidth: 0, paddingHorizontal: spacing.sm },
+  searchArea: { marginTop: spacing.sm },
+  filters: { gap: spacing.sm, paddingVertical: spacing.md },
+  filterChip: { paddingHorizontal: spacing.md },
+  productList: { gap: 0 },
+  feedback: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xl },
   errorText: { color: colors.semantic.error, textAlign: 'center' },
 });

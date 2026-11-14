@@ -29,24 +29,50 @@ const EXPIRY_OPTIONS: { value: ExpiryType; label: string }[] = [
   { value: 'USE_BY', label: 'Sista förbrukningsdag' },
 ];
 
+export interface InventoryItemFormInitialValues extends Omit<
+  Partial<SaveInventoryItemInput>,
+  'quantity' | 'unit'
+> {
+  quantity?: number | null;
+  unit?: InventoryUnit | null;
+}
+
 interface InventoryItemFormProps {
   initialItem?: InventoryItem;
+  initialValues?: InventoryItemFormInitialValues;
   saveLabel: string;
   onSave(input: SaveInventoryItemInput, requestKey: string): Promise<void>;
 }
 
-export function InventoryItemForm({ initialItem, saveLabel, onSave }: InventoryItemFormProps) {
+export function InventoryItemForm({
+  initialItem,
+  initialValues,
+  saveLabel,
+  onSave,
+}: InventoryItemFormProps) {
   const initialBatch = initialItem?.batches[0];
   const [name, setName] = useState(initialItem?.name ?? '');
   const [quantity, setQuantity] = useState(
-    initialItem ? String(initialItem.quantity).replace('.', ',') : '1',
+    initialItem
+      ? String(initialItem.quantity).replace('.', ',')
+      : initialValues?.quantity === null
+        ? ''
+        : initialValues?.quantity !== undefined
+          ? String(initialValues.quantity).replace('.', ',')
+          : '1',
   );
-  const [unit, setUnit] = useState<InventoryUnit>(initialItem?.unit ?? 'st');
+  const [unit, setUnit] = useState<InventoryUnit | null>(
+    initialItem?.unit ?? (initialValues?.unit === null ? null : (initialValues?.unit ?? 'st')),
+  );
   const [storageLocation, setStorageLocation] = useState<StorageLocation>(
-    initialItem?.storageLocation ?? 'FRIDGE',
+    initialItem?.storageLocation ?? initialValues?.storageLocation ?? 'FRIDGE',
   );
-  const [expiryDate, setExpiryDate] = useState(initialBatch?.expiryDate ?? '');
-  const [expiryType, setExpiryType] = useState<ExpiryType | null>(initialBatch?.expiryType ?? null);
+  const [expiryDate, setExpiryDate] = useState(
+    initialBatch?.expiryDate ?? initialValues?.expiryDate ?? '',
+  );
+  const [expiryType, setExpiryType] = useState<ExpiryType | null>(
+    initialBatch?.expiryType ?? initialValues?.expiryType ?? null,
+  );
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -65,6 +91,10 @@ export function InventoryItemForm({ initialItem, saveLabel, onSave }: InventoryI
     }
     if (decimalPlaces(parsedQuantity) > 3) {
       setFieldError('Mängden kan ha högst tre decimaler.');
+      return;
+    }
+    if (!unit) {
+      setFieldError('Välj en enhet.');
       return;
     }
     if (parsedDate && !isCalendarDate(parsedDate)) {
