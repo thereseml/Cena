@@ -75,3 +75,11 @@ it('handles error message codes as well as code properties without leaking inter
   expect(receiptErrorMessage(new Error('NO_TEXT'))).toMatch(/Ingen text/);
   expect(receiptErrorMessage({ message: 'native secrets' })).toMatch(/Kvittot kunde inte läsas/);
 });
+
+it('offers Expo Go recovery without requiring a custom app build when OCR is unavailable', () => {
+  const message = receiptErrorMessage(new Error('OCR_UNAVAILABLE'));
+  expect(message).toMatch(/Kvittoläsningen kunde inte starta/);
+  expect(message).toMatch(/Expo Go/);
+  expect(message).toMatch(/manuellt/);
+  expect(message).not.toMatch(/egen appversion|custom|specialbygg/i);
+});

@@ -2,12 +2,14 @@ import type { InventoryUnit, StorageLocation } from '@cena/contracts';
 
 export interface ReceiptOcrLine {
   text: string;
+  confidence?: number;
   frame?: { left: number; top: number; right: number; bottom: number };
 }
 
 export interface ReceiptOcrResult {
   text: string;
   lines: ReceiptOcrLine[];
+  confidence?: number;
 }
 
 export type ReceiptClassification = 'FOOD' | 'NON_FOOD' | 'UNKNOWN';

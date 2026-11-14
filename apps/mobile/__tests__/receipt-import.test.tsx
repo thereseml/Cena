@@ -1,5 +1,6 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { Alert } from 'react-native';
+import { ImageManipulator } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { router, usePreventRemove } from 'expo-router';
 import { ReceiptImportFlow } from '../features/receipt-import/ReceiptImportFlow';
@@ -9,9 +10,48 @@ import {
   parseReceipt,
   type ParsedReceipt,
   type ReceiptProduct,
+  type ReceiptOcrResult,
 } from '../features/receipt-import/receipt-parser';
 import { useAuth } from '../features/auth/AuthProvider';
 import * as ReceiptReviewModule from '../features/receipt-import/ReceiptReview';
+import type { ReceiptOcrEngineHandle } from '../features/receipt-import/ReceiptOcrEngine';
+
+const mockRecognize = jest.fn<Promise<ReceiptOcrResult>, [string]>();
+const mockCancel = jest.fn();
+const mockDelete = jest.fn();
+const mockRelease = jest.fn();
+jest.mock('../features/receipt-import/ReceiptOcrEngine', () => {
+  const React = jest.requireActual<typeof import('react')>('react');
+  return {
+    ReceiptOcrEngine: ({ ref }: { ref?: import('react').Ref<ReceiptOcrEngineHandle> }) => {
+      React.useImperativeHandle(ref, () => ({ recognize: mockRecognize, cancel: mockCancel }));
+      return null;
+    },
+  };
+});
+jest.mock('expo-file-system', () => ({
+  File: class {
+    uri: string;
+    exists = true;
+    size = 100_000;
+    constructor(uri: string) {
+      this.uri = uri;
+    }
+    open() {
+      return { readBytes: async () => Uint8Array.from([255, 216, 255]), close: jest.fn() };
+    }
+    async base64() {
+      return '/9j/receipt';
+    }
+    delete() {
+      mockDelete(this.uri);
+    }
+  },
+}));
+jest.mock('expo-image-manipulator', () => ({
+  ImageManipulator: { manipulate: jest.fn() },
+  SaveFormat: { JPEG: 'jpeg' },
+}));
 
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), push: jest.fn(), replace: jest.fn() },
@@ -76,6 +116,16 @@ beforeEach(() => {
   picker.launchCameraAsync.mockResolvedValue({ canceled: false, assets: [asset] });
   readMock.mockResolvedValue({ products: [milk], unrecognizedLines: [] });
   saveMock.mockResolvedValue([]);
+  mockRecognize.mockResolvedValue({ text: 'MJÖLK 16,90', lines: [{ text: 'MJÖLK 16,90' }] });
+  jest.mocked(ImageManipulator.manipulate).mockReturnValue({
+    renderAsync: async () => ({
+      width: 1200,
+      height: 6000,
+      saveAsync: async () => ({ uri: 'file:///converted.jpg' }),
+      release: mockRelease,
+    }),
+    release: mockRelease,
+  } as never);
 });
 
 afterEach(() => jest.restoreAllMocks());
@@ -120,7 +170,7 @@ it('takes a photo without cropping and passes the full asset and rotation to loc
   });
   await fireEvent.press(screen.getByText('Rotera kvitto'));
   await fireEvent.press(screen.getByText('Läs kvitto'));
-  expect(readMock).toHaveBeenCalledWith(asset, 90);
+  expect(readMock).toHaveBeenCalledWith(asset, 90, expect.any(Function), expect.any(AbortSignal));
   expect(saveMock).not.toHaveBeenCalled();
 });
 
@@ -147,7 +197,25 @@ it('restores the entire Android pending asset, including file metadata', async (
   const screen = await render(<ReceiptImportFlow />);
   await screen.findByLabelText('Förhandsvisning av kvitto');
   await fireEvent.press(screen.getByText('Läs kvitto'));
-  expect(readMock).toHaveBeenCalledWith(asset, 0);
+  expect(readMock).toHaveBeenCalledWith(asset, 0, expect.any(Function), expect.any(AbortSignal));
+});
+
+it('prepares an image with the real adapter and reviews the mounted engine callback result', async () => {
+  const actual = jest.requireActual<typeof import('../features/receipt-import/receipt-ocr')>(
+    '../features/receipt-import/receipt-ocr',
+  );
+  readMock.mockImplementationOnce(actual.readReceipt);
+  const screen = await openReview();
+  expect(ImageManipulator.manipulate).toHaveBeenCalledWith(asset.uri, {
+    maxWidth: 1200,
+    maxHeight: 6000,
+  });
+  expect(mockRecognize).toHaveBeenCalledWith('data:image/jpeg;base64,/9j/receipt');
+  expect(screen.getByText('Originaltext: MJÖLK 16,90')).toBeTruthy();
+  expect(screen.getByRole('checkbox', { name: /Vald: MJÖLK/i })).toBeChecked();
+  expect(mockDelete.mock.calls).toEqual([['file:///converted.jpg']]);
+  expect(mockRelease).toHaveBeenCalledTimes(2);
+  expect(saveMock).not.toHaveBeenCalled();
 });
 
 it('handles failed Android recovery safely', async () => {
@@ -162,7 +230,7 @@ it.each([
   ['INVALID_IMAGE', /Bilden kunde inte öppnas/],
   ['OCR_FAILED', /Kvittot kunde inte läsas/],
   ['NO_TEXT', /Ingen text kunde läsas/],
-  ['OCR_UNAVAILABLE', /inte tillgänglig här/],
+  ['OCR_UNAVAILABLE', /Kvittoläsningen kunde inte starta/],
   ['secret internal error', /Kvittot kunde inte läsas/],
 ])('maps %s to safe Swedish recovery copy', async (code, message) => {
   readMock.mockRejectedValueOnce(Object.assign(new Error('private details'), { code }));
@@ -170,6 +238,10 @@ it.each([
   await fireEvent.press(screen.getByText('Välj från bilder'));
   await fireEvent.press(screen.getByText('Läs kvitto'));
   expect(await screen.findByText(message)).toBeTruthy();
+  if (code === 'OCR_UNAVAILABLE') {
+    expect(screen.getByText(/Expo Go/)).toBeTruthy();
+    expect(screen.queryByText(/egen appversion|custom|specialbygg/i)).toBeNull();
+  }
   expect(screen.queryByText('private details')).toBeNull();
   expect(screen.getByText('Läs kvitto')).toBeTruthy();
   await fireEvent.press(screen.getByText('Lägg till manuellt'));
@@ -177,7 +249,7 @@ it.each([
   expect(saveMock).not.toHaveBeenCalled();
 });
 
-it('ignores canceled OCR results but prevents overlapping native calls until settlement', async () => {
+it('ignores canceled OCR results but prevents overlapping calls until settlement', async () => {
   let resolve!: (receipt: ParsedReceipt) => void;
   readMock.mockImplementationOnce(
     () =>
@@ -188,7 +260,11 @@ it('ignores canceled OCR results but prevents overlapping native calls until set
   const screen = await render(<ReceiptImportFlow />);
   await fireEvent.press(screen.getByText('Välj från bilder'));
   await fireEvent.press(screen.getByText('Läs kvitto'));
+  const signal = readMock.mock.calls[0][3];
+  expect(signal?.aborted).toBe(false);
   await fireEvent.press(screen.getByText('Avbryt läsning'));
+  expect(signal?.aborted).toBe(true);
+  expect(mockCancel).toHaveBeenCalledTimes(1);
   expect(screen.getByText('Läsningen avbröts. Inget har lagts till.')).toBeTruthy();
   await fireEvent.press(screen.getByText('Läs kvitto'));
   await fireEvent.press(screen.getByText('Välj från bilder'));
@@ -200,9 +276,11 @@ it('ignores canceled OCR results but prevents overlapping native calls until set
   await fireEvent.press(screen.getByText('Läs kvitto'));
   expect(await screen.findByText('Granska kvitto')).toBeTruthy();
   expect(readMock).toHaveBeenCalledTimes(2);
+  expect(readMock.mock.calls[1][3]?.aborted).toBe(false);
+  expect(readMock.mock.calls[1][3]).not.toBe(signal);
 });
 
-it('cleans up after unmount without accepting a stale native result', async () => {
+it('cleans up after unmount without accepting a stale OCR result', async () => {
   let resolve!: (receipt: ParsedReceipt) => void;
   readMock.mockImplementationOnce(
     () =>
@@ -213,7 +291,9 @@ it('cleans up after unmount without accepting a stale native result', async () =
   const screen = await render(<ReceiptImportFlow />);
   await fireEvent.press(screen.getByText('Välj från bilder'));
   await fireEvent.press(screen.getByText('Läs kvitto'));
+  const signal = readMock.mock.calls[0][3];
   await screen.unmount();
+  expect(signal?.aborted).toBe(true);
   expect(removeReceiptTempFiles).not.toHaveBeenCalled();
   await act(async () => resolve({ products: [milk], unrecognizedLines: [] }));
   expect(removeReceiptTempFiles).toHaveBeenCalledTimes(1);

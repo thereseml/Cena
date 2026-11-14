@@ -13,19 +13,21 @@ This document records **new product-owner decisions** made after blueprint v2.0.
 
 ## Nine confirmed MVP decisions
 
-| ID | Topic | Approved decision | Scope implication |
-| --- | --- | --- | --- |
-| D01 | Release | Private beta with 5–20 testers | Beta access and feedback, not public monetized launch |
-| D02 | Inventory entry | Manual entry **and** on-device receipt OCR import | Both P0; replaces general product-image recognition in PR12 |
-| D03 | Recipes | Personalized, AI-generated recipes | P0; respect inventory and preferences |
-| D04 | Planning | Weekly meal planning is P1 | Not required for beta |
-| D05 | Household | Multiple users share a household | Household sharing promoted from P1 to P0 |
-| D06 | Receipt input | Extract multiple product rows from a receipt photo or screenshot using local OCR and deterministic Swedish parsing | Review/edit/select before saving; no cloud LLM or paid recognition service |
-| D07 | Invitations | Invite by link **or** email | Both are acceptable invitation methods; exact implementation TBD |
-| D08 | Expiry | Optional expiry dates and simple overview | No mandatory date, no push reminders |
-| D09 | Shopping | Check off purchases and offer to add them to inventory | Inventory additions require explicit confirmation |
+| ID  | Topic           | Approved decision                                                                                                  | Scope implication                                                          |
+| --- | --------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| D01 | Release         | Private beta with 5–20 testers                                                                                     | Beta access and feedback, not public monetized launch                      |
+| D02 | Inventory entry | Manual entry **and** on-device receipt OCR import                                                                  | Both P0; replaces general product-image recognition in PR12                |
+| D03 | Recipes         | Personalized, AI-generated recipes                                                                                 | P0; respect inventory and preferences                                      |
+| D04 | Planning        | Weekly meal planning is P1                                                                                         | Not required for beta                                                      |
+| D05 | Household       | Multiple users share a household                                                                                   | Household sharing promoted from P1 to P0                                   |
+| D06 | Receipt input   | Extract multiple product rows from a receipt photo or screenshot using local OCR and deterministic Swedish parsing | Review/edit/select before saving; no cloud LLM or paid recognition service |
+| D07 | Invitations     | Invite by link **or** email                                                                                        | Both are acceptable invitation methods; exact implementation TBD           |
+| D08 | Expiry          | Optional expiry dates and simple overview                                                                          | No mandatory date, no push reminders                                       |
+| D09 | Shopping        | Check off purchases and offer to add them to inventory                                                             | Inventory additions require explicit confirmation                          |
 
 **Approved revision, 2026-11-14:** The product owner explicitly replaced PR12 general product-image recognition with OCR-only receipt import. D02, D06 and J03 now describe this replacement, not an additional recognition mode. Basic receipt OCR moves from historical P2 to P0; general grocery-photo recognition is outside this beta scope. No cloud LLM, cloud OCR fallback or paid service is authorized for receipt import. See [ADR-0009](adr/0009-receipt-import-ocr.md) and the [receipt import guide](receipt-import.md). Other AI use cases are unchanged by this decision.
+
+**Technical revision, 2026-11-14:** The product owner explicitly requires Expo Go for receipt import. [ADR-0010](adr/0010-expo-go-receipt-ocr.md) replaces ADR-0009's native ML Kit/custom-build choice with bundled Tesseract.js 7 in a local WebView. D02, D06 and J03 retain the same approved receipt-only scope and confirmation/security boundaries. OCR needs no inference network after the bundled assets are loaded; this is not a promise of a fully offline Expo Go cold start or offline inventory saving.
 
 ## P0 — required for private beta
 
@@ -103,7 +105,7 @@ Barcode/supermarket integrations, price comparisons, automatic replenishment, ad
 ### J03 — On-device receipt import
 
 1. A takes/selects a receipt photo or screenshot containing at least two food product rows.
-2. Cena performs OCR on device and proposes rows using deterministic parsing, distinguishing food, non-food, unknown and unrecognized content.
+2. Cena performs OCR on device in Expo Go on iOS/Android and proposes rows using deterministic parsing, distinguishing food, non-food, unknown and unrecognized content.
 3. A corrects a candidate, excludes an incorrect/non-food row, reviews proposed quantities and chooses any missing storage location.
 4. A explicitly confirms between 1 and 30 selected items for the shared household.
 
@@ -152,17 +154,17 @@ Barcode/supermarket integrations, price comparisons, automatic replenishment, ad
 
 These must be settled in the relevant design/architecture/issues work **before implementing their affected flow**, but they do not block approval of this MVP scope.
 
-| Question | Owner / next step |
-| --- | --- |
-| Invite transport, link lifetime, expiry, revocation and abuse controls | Architecture/security ADR |
-| Household membership roles, ownership transfer and simultaneous-edit conflicts | Architecture/domain ADR; start with minimal safe permissions |
-| Receipt formats, image limits and recovery behavior | ADR-0009 and receipt import guide; real-device verification remains required; wrapper has no OCR confidence scores |
-| Ingredient taxonomy, quantities/units and recipe matching semantics | Domain/API specification |
-| How to represent best-before vs use-by and which dates appear as “soon” | Product + food-safety UX decision |
-| Beta distribution, consent, feedback channel and privacy notices | Release checklist |
-| Whether subscription/paywall is absent or hidden in private beta | Product/commercial decision |
-| How to represent Home and Plan tabs without shipping P1 functionality | UX decision |
-| Beta success measures and observation window | Product validation plan |
+| Question                                                                       | Owner / next step                                                                                                                                                                                      |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Invite transport, link lifetime, expiry, revocation and abuse controls         | Architecture/security ADR                                                                                                                                                                              |
+| Household membership roles, ownership transfer and simultaneous-edit conflicts | Architecture/domain ADR; start with minimal safe permissions                                                                                                                                           |
+| Receipt formats, image limits and recovery behavior                            | ADR-0009 scope, ADR-0010 engine and receipt import guide; physical-device/Android verification remains required; optional Tesseract confidence is a raw 0–100 OCR score, not verified product identity |
+| Ingredient taxonomy, quantities/units and recipe matching semantics            | Domain/API specification                                                                                                                                                                               |
+| How to represent best-before vs use-by and which dates appear as “soon”        | Product + food-safety UX decision                                                                                                                                                                      |
+| Beta distribution, consent, feedback channel and privacy notices               | Release checklist                                                                                                                                                                                      |
+| Whether subscription/paywall is absent or hidden in private beta               | Product/commercial decision                                                                                                                                                                            |
+| How to represent Home and Plan tabs without shipping P1 functionality          | UX decision                                                                                                                                                                                            |
+| Beta success measures and observation window                                   | Product validation plan                                                                                                                                                                                |
 
 ## Change control
 

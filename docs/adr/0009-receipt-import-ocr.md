@@ -2,6 +2,9 @@
 
 **Status:** Accepted (explicit product-owner decision, 2026-11-14)
 **Supersedes:** [ADR-0008](0008-food-recognition-provider.md)
+**Partially superseded by:** [ADR-0010](0010-expo-go-receipt-ocr.md) (2026-11-14), for the OCR engine and custom-native-build requirement only.
+
+The receipt-only scope, deterministic parsing, review/confirmation and inventory/privacy boundaries remain accepted. The ML Kit dependencies, patches, lack of wrapper confidence and custom-build limitations below describe the historical implementation, not the current setup. Follow ADR-0010 and the receipt import guide for Expo Go, image preparation and current verification status.
 
 ## Context
 

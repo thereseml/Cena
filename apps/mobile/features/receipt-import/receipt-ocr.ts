@@ -1,5 +1,4 @@
 import { File } from 'expo-file-system';
-import { requireOptionalNativeModule } from 'expo';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import type { ImagePickerAsset } from 'expo-image-picker';
 import { Platform } from 'react-native';
@@ -7,6 +6,7 @@ import { parseReceipt, type ParsedReceipt, type ReceiptOcrResult } from './recei
 
 const MAX_BYTES = 20 * 1024 * 1024;
 const MAX_PIXELS = 30_000_000;
+const MAX_OCR_PIXELS = 8_000_000;
 const temporaryFiles = new Set<string>();
 let reading = false;
 
@@ -53,13 +53,22 @@ async function validateFormat(file: File): Promise<void> {
   }
 }
 
-export async function readReceipt(asset: ImagePickerAsset, rotation = 0): Promise<ParsedReceipt> {
+export async function readReceipt(
+  asset: ImagePickerAsset,
+  rotation: number,
+  recognize: (dataUrl: string) => Promise<ReceiptOcrResult>,
+  signal?: AbortSignal,
+): Promise<ParsedReceipt> {
   if (Platform.OS !== 'ios' && Platform.OS !== 'android') throw new Error('OCR_UNAVAILABLE');
   if (reading) throw new Error('OCR_FAILED');
   reading = true;
   let context: ReturnType<typeof ImageManipulator.manipulate> | undefined;
   let image: Awaited<ReturnType<NonNullable<typeof context>['renderAsync']>> | undefined;
+  function checkCancelled() {
+    if (signal?.aborted) throw new Error('OCR_CANCELLED');
+  }
   try {
+    checkCancelled();
     if (!/^file:\/\//.test(asset.uri) || ![0, 90, 180, 270].includes(rotation)) {
       throw new Error('INVALID_IMAGE');
     }
@@ -67,58 +76,40 @@ export async function readReceipt(asset: ImagePickerAsset, rotation = 0): Promis
     const source = new File(asset.uri);
     validateFile(source);
     await validateFormat(source);
-
-    // The wrapper eagerly requires its native module. Optional lookup keeps manual
-    // entry usable in Expo Go/web instead of crashing when this screen loads.
-    const native = requireOptionalNativeModule<{
-      recognizeText: typeof import('@infinitered/react-native-mlkit-text-recognition').recognizeText;
-    }>('RNMLKitTextRecognition');
-    if (!native) throw new Error('OCR_UNAVAILABLE');
-
-    // Normalize orientation/format without the old 1600px cloud-upload downscale.
-    context = ImageManipulator.manipulate(asset.uri);
+    checkCancelled();
+    // Bound WebView/WASM bitmap memory, preserving aspect ratio and long receipts.
+    const scale = Math.min(1, Math.sqrt(MAX_OCR_PIXELS / (asset.width * asset.height)));
+    context = ImageManipulator.manipulate(asset.uri, {
+      maxWidth: Math.floor(asset.width * scale),
+      maxHeight: Math.floor(asset.height * scale),
+    });
     if (rotation) context.rotate(rotation);
     image = await context.renderAsync();
+    checkCancelled();
     validateDimensions(image.width, image.height);
-    const converted = await image.saveAsync({ format: SaveFormat.JPEG, compress: 1 });
+    if (image.width * image.height > MAX_OCR_PIXELS) throw new Error('IMAGE_TOO_LARGE');
+    const converted = await image.saveAsync({ format: SaveFormat.JPEG, compress: 0.9 });
     if (converted.uri === asset.uri || !converted.uri.startsWith('file://')) {
       throw new Error('INVALID_IMAGE');
     }
     temporaryFiles.add(converted.uri);
-    validateFile(new File(converted.uri));
-    let result: Awaited<ReturnType<typeof native.recognizeText>>;
-    try {
-      result = await native.recognizeText(converted.uri);
-    } catch {
-      throw new Error('OCR_FAILED');
-    }
-    // Validate shape before iterating native data. The parser validates text and geometry bounds.
-    if (
-      !result ||
-      typeof result.text !== 'string' ||
-      result.text.length > 100_000 ||
-      !Array.isArray(result.blocks) ||
-      result.blocks.length > 2_000
-    ) {
-      throw new Error('OCR_FAILED');
-    }
-    const lines: ReceiptOcrResult['lines'] = [];
-    for (const block of result.blocks) {
-      if (!block || !Array.isArray(block.lines) || block.lines.length + lines.length > 2_000) {
-        throw new Error('OCR_FAILED');
-      }
-      for (const line of block.lines) {
-        if (!line || typeof line.text !== 'string') throw new Error('OCR_FAILED');
-        lines.push({ text: line.text, ...(line.frame ? { frame: line.frame } : {}) });
-      }
-    }
-    if (!result.text.trim() && !lines.some((line) => line.text.trim())) throw new Error('NO_TEXT');
-    return parseReceipt({ text: result.text, lines });
+    checkCancelled();
+    const file = new File(converted.uri);
+    validateFile(file);
+    const dataUrl = `data:image/jpeg;base64,${await file.base64()}`;
+    checkCancelled();
+    const result = await recognize(dataUrl);
+    checkCancelled();
+    const parsed = parseReceipt(result);
+    if (!result.text.trim() && !result.lines.some((line) => line.text.trim()))
+      throw new Error('NO_TEXT');
+    return parsed;
   } catch (error) {
     const code = error instanceof Error ? error.message : '';
     if (
       [
         'OCR_UNAVAILABLE',
+        'OCR_CANCELLED',
         'OCR_FAILED',
         'NO_TEXT',
         'INVALID_IMAGE',

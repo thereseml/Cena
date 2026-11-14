@@ -66,7 +66,7 @@ export function receiptErrorMessage(error: unknown): string {
     case 'NO_TEXT':
       return 'Ingen text kunde läsas. Ta en tydligare bild av hela kvittot.';
     case 'OCR_UNAVAILABLE':
-      return 'Kvittoläsning är inte tillgänglig här. Det krävs en egenbyggd Cena-app för iOS eller Android, inte Expo Go eller webben. Lägg till manuellt i stället.';
+      return 'Kvittoläsningen kunde inte starta. Kontrollera anslutningen så att appens OCR-filer kan hämtas och försök igen. Använd Cena i Expo Go eller som app på iOS eller Android. Du kan också lägga till manuellt.';
     default:
       return 'Kvittot kunde inte läsas. Försök igen med en tydligare bild eller lägg till manuellt.';
   }

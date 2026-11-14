@@ -1,2 +1,2 @@
-# Dependency patches must retain upstream context, including its whitespace.
-patches/*.patch -whitespace
+# Pinned vendor code and notices must retain their original bytes.
+apps/mobile/assets/ocr/*.txt -whitespace

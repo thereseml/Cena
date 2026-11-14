@@ -11,6 +11,7 @@ import { readReceipt, removeReceiptTempFiles } from './receipt-ocr';
 import { importReceiptItems } from './receipt-import-api';
 import { ReceiptCapture } from './ReceiptCapture';
 import { ReceiptReview } from './ReceiptReview';
+import { ReceiptOcrEngine, type ReceiptOcrEngineHandle } from './ReceiptOcrEngine';
 import {
   receiptErrorMessage,
   reviewItemError,
@@ -38,6 +39,8 @@ export function ReceiptImportFlow() {
   const mounted = useRef(false);
   const generation = useRef(0);
   const ocrPending = useRef(false);
+  const ocrEngine = useRef<ReceiptOcrEngineHandle>(null);
+  const ocrAbort = useRef<AbortController | null>(null);
   const pickerPending = useRef(false);
   const savePending = useRef(false);
   const saved = useRef(false);
@@ -69,6 +72,7 @@ export function ReceiptImportFlow() {
       });
     return () => {
       mounted.current = false;
+      ocrAbort.current?.abort();
       if (!ocrPending.current) removeReceiptTempFiles();
     };
   }, []);
@@ -122,13 +126,23 @@ export function ReceiptImportFlow() {
     if (!asset || ocrPending.current || pickerPending.current || request.current || saved.current)
       return;
     ocrPending.current = true;
+    const controller = new AbortController();
+    ocrAbort.current = controller;
     const token = ++generation.current;
     setPhysicalPending(true);
     setAnalyzing(true);
     setError(null);
     setMessage(null);
     try {
-      const receipt = await readReceipt(asset, rotation);
+      const receipt = await readReceipt(
+        asset,
+        rotation,
+        (dataUrl) => {
+          if (!ocrEngine.current) throw new Error('OCR_UNAVAILABLE');
+          return ocrEngine.current.recognize(dataUrl);
+        },
+        controller.signal,
+      );
       if (!mounted.current || token !== generation.current) return;
       setItems(receipt.products.map(toReviewItem));
       setLines(receipt.unrecognizedLines);
@@ -136,8 +150,9 @@ export function ReceiptImportFlow() {
     } catch (failure) {
       if (mounted.current && token === generation.current) setError(receiptErrorMessage(failure));
     } finally {
-      // Native OCR cannot be aborted. Keep its lock until it actually settles.
+      // Image preparation must settle before its temporary files can be deleted.
       ocrPending.current = false;
+      ocrAbort.current = null;
       removeReceiptTempFiles();
       if (mounted.current) {
         setPhysicalPending(false);
@@ -320,6 +335,8 @@ export function ReceiptImportFlow() {
               onRead={() => void read()}
               onCancel={() => {
                 generation.current++;
+                ocrAbort.current?.abort();
+                ocrEngine.current?.cancel();
                 setAnalyzing(false);
                 setMessage('Läsningen avbröts. Inget har lagts till.');
               }}
@@ -339,6 +356,7 @@ export function ReceiptImportFlow() {
           </Text>
         ) : null}
       </ScrollView>
+      <ReceiptOcrEngine ref={ocrEngine} />
     </SafeAreaView>
   );
 }

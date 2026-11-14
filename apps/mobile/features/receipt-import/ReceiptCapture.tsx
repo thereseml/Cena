@@ -29,6 +29,11 @@ export function ReceiptCapture({
         Fotografera hela kvittot eller välj en bild. Du granskar och väljer varorna innan något
         läggs till i ditt kök.
       </Text>
+      {analyzing ? (
+        <Text variant="bodySmall" tone="muted">
+          Första läsningen kan ta längre tid medan appens OCR-filer hämtas.
+        </Text>
+      ) : null}
       <Button label="Ta foto av kvitto" disabled={busy} onPress={() => onChoose('camera')} />
       <Button
         label="Välj från bilder"
@@ -69,8 +74,8 @@ export function ReceiptCapture({
         från kvittot.
       </Text>
       <Text variant="caption" tone="muted">
-        Google ML Kit kan skicka tekniska användnings- och prestandamått till Google, men inte
-        kvittobilden eller den avlästa texten.
+        Första gången hämtas OCR-motorn och svenska språkfiler som en del av appen. Själva
+        kvittoläsningen görs lokalt, utan att bilden eller texten laddas upp.
       </Text>
     </View>
   );

@@ -25,7 +25,8 @@
           "photosPermission": "Välj en kvittobild som Cena kan läsa på din enhet.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-asset"
     ]
   }
 }
