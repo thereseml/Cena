@@ -1,5 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
-import { parseIdempotencyKey, parseInventoryInput } from '../src/inventory/inventory-validation';
+import {
+  parseIdempotencyKey,
+  parseInventoryInput,
+  parseInventoryInputs,
+} from '../src/inventory/inventory-validation';
 
 const validInput = {
   name: ' Mjölk ',
@@ -77,5 +81,35 @@ describe('parseInventoryInput', () => {
     expect(parseIdempotencyKey('mobile:abc:random')).toBe('mobile:abc:random');
     expect(() => parseIdempotencyKey(undefined)).toThrow(BadRequestException);
     expect(() => parseIdempotencyKey('short')).toThrow(BadRequestException);
+  });
+});
+
+describe('parseInventoryInputs', () => {
+  it('validates all entries before a bulk inventory write', () => {
+    const items = parseInventoryInputs({
+      items: [
+        { ...validInput, expiryDate: null, expiryType: null, expirySource: null },
+        {
+          ...validInput,
+          name: 'Ägg',
+          quantity: 6,
+          unit: 'st',
+          expiryDate: null,
+          expiryType: null,
+          expirySource: null,
+        },
+      ],
+    });
+    expect(items.map((item) => item.name)).toEqual(['Mjölk', 'Ägg']);
+  });
+
+  it('rejects empty, oversized, or partially invalid batches', () => {
+    expect(() => parseInventoryInputs({ items: [] })).toThrow(BadRequestException);
+    expect(() => parseInventoryInputs({ items: Array(31).fill(validInput) })).toThrow(
+      BadRequestException,
+    );
+    expect(() =>
+      parseInventoryInputs({ items: [validInput, { ...validInput, quantity: 0 }] }),
+    ).toThrow(BadRequestException);
   });
 });

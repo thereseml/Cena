@@ -1,0 +1,66 @@
+{
+  "description": "Unmodified browser runtime assets. SHA-256 hashes pin the exact files verified in Expo Go. No URL in this manifest is used at app runtime.",
+  "assets": [
+    {
+      "file": "tesseract-main.txt",
+      "url": "https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js",
+      "bytes": 62961,
+      "sha256": "000c27d9cd0def655f77b36c72a389c0ab13793aa31cb4d7aab56d09c0afbc7e",
+      "license": "Apache-2.0; bundled dependency notices included separately"
+    },
+    {
+      "file": "tesseract-worker.txt",
+      "url": "https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/worker.min.js",
+      "bytes": 111307,
+      "sha256": "576b7df7e3393e137e51849357c9adb53fe7ac1bb69bfa06cf3d61520f182c6d",
+      "license": "Apache-2.0; bundled dependency notices included separately"
+    },
+    {
+      "file": "tesseract-glue.txt",
+      "url": "https://cdn.jsdelivr.net/npm/tesseract.js-core@7.0.0/tesseract-core-lstm.js",
+      "bytes": 89261,
+      "sha256": "6510efc4e8b45c5465df30679b9911ffe0071cd2ee982fa064e6f5136ef2de85",
+      "license": "Apache-2.0; compiled dependency notices included separately"
+    },
+    {
+      "file": "tesseract-core.wasm",
+      "url": "https://cdn.jsdelivr.net/npm/tesseract.js-core@7.0.0/tesseract-core-lstm.wasm",
+      "bytes": 2855361,
+      "sha256": "66b17df6e20c5329a17ffa9c202a47eaa3e32500b253d4c7f38e7f2bc01457c3",
+      "license": "Apache-2.0; compiled dependency notices included separately"
+    },
+    {
+      "file": "swe.traineddata.gz",
+      "url": "https://cdn.jsdelivr.net/npm/@tesseract.js-data/swe@1.0.0/4.0.0_best_int/swe.traineddata.gz",
+      "bytes": 2503095,
+      "sha256": "b60d9fea7e570d11d6fdf26c8d0ef1d63b49222313773ce66777ed08fa20dc5a",
+      "license": "Apache-2.0 (upstream tessdata); NPM wrapper metadata says MIT, not treated as relicensing the model"
+    }
+  ],
+  "notices": [
+    "LICENSE-tesseract.txt",
+    "LICENSE-tesseract-core.txt",
+    "LICENSE-tessdata.txt",
+    "tesseract.min.js.LICENSE.txt",
+    "worker.min.js.LICENSE.txt",
+    "LICENSE-regenerator-runtime.txt",
+    "LICENSE-buffer.txt",
+    "LICENSE-base64-js.txt",
+    "LICENSE-ieee754.txt",
+    "LICENSE-bmp-js.txt",
+    "LICENSE-is-url.txt",
+    "LICENSE-idb-keyval.txt",
+    "LICENSE-wasm-feature-detect.txt",
+    "LICENSE-zlibjs.txt",
+    "LICENSE-tesseract-native.txt",
+    "LICENSE-leptonica.txt",
+    "LICENSE-giflib.txt",
+    "LICENSE-libjpeg.txt",
+    "LICENSE-libpng.txt",
+    "LICENSE-libtiff.txt",
+    "LICENSE-libwebp.txt",
+    "LICENSE-openlibm.txt",
+    "LICENSE-zlib.txt",
+    "LICENSE-emscripten.txt"
+  ]
+}
