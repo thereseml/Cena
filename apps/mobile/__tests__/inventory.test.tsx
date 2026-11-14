@@ -96,13 +96,13 @@ describe('KitchenScreen', () => {
     expect(router.push).toHaveBeenCalledWith('/add-product');
   });
 
-  it('groups manual and photo actions and opens the photo flow', async () => {
+  it('groups manual and receipt actions and opens receipt import', async () => {
     const { getByText } = await render(<KitchenScreen />);
 
     expect(getByText('Lägg till vara')).toBeTruthy();
-    await fireEvent.press(getByText('Med foto'));
+    await fireEvent.press(getByText('Skanna kvitto'));
 
-    expect(router.push).toHaveBeenCalledWith('/photo-recognition');
+    expect(router.push).toHaveBeenCalledWith('/receipt-import');
   });
 
   it('keeps the profile action available alongside the count and grouped kitchen actions', async () => {
@@ -110,7 +110,7 @@ describe('KitchenScreen', () => {
 
     expect(getByLabelText('Öppna profil och inställningar')).toBeTruthy();
     expect(getByRole('button', { name: 'Lägg till vara' })).toBeTruthy();
-    expect(getByRole('button', { name: 'Med foto' })).toBeTruthy();
+    expect(getByRole('button', { name: 'Skanna kvitto' })).toBeTruthy();
   });
 
   it('shows an error and retries instead of falling back to sample inventory', async () => {

@@ -87,10 +87,10 @@ describe('authenticated inventory API requests', () => {
     const form = new FormData();
     form.append('image', 'photo');
 
-    await apiRequest('food-recognition/analyze', { method: 'POST', body: form });
+    await apiRequest('uploads', { method: 'POST', body: form });
 
     expect(global.fetch).toHaveBeenCalledWith(
-      'http://localhost:3000/api/v1/food-recognition/analyze',
+      'http://localhost:3000/api/v1/uploads',
       expect.objectContaining({
         headers: expect.not.objectContaining({ 'Content-Type': 'application/json' }),
         body: form,
@@ -107,13 +107,13 @@ describe('authenticated inventory API requests', () => {
     form.append('image', 'photo');
 
     await apiRequest(
-      'food-recognition/analyze',
+      'uploads',
       { method: 'POST', body: form },
       nativeFetch as unknown as typeof fetch,
     );
 
     expect(nativeFetch).toHaveBeenCalledWith(
-      'http://localhost:3000/api/v1/food-recognition/analyze',
+      'http://localhost:3000/api/v1/uploads',
       expect.objectContaining({
         headers: expect.objectContaining({ Authorization: 'Bearer access-token' }),
         body: form,
@@ -126,7 +126,7 @@ describe('authenticated inventory API requests', () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
     const nativeFileBody = { getParts: () => [] } as unknown as BodyInit;
 
-    await apiRequest('food-recognition/analyze', { method: 'POST', body: nativeFileBody });
+    await apiRequest('uploads', { method: 'POST', body: nativeFileBody });
 
     expect(global.fetch).toHaveBeenCalledWith(
       expect.any(String),

@@ -16,14 +16,16 @@ This document records **new product-owner decisions** made after blueprint v2.0.
 | ID | Topic | Approved decision | Scope implication |
 | --- | --- | --- | --- |
 | D01 | Release | Private beta with 5–20 testers | Beta access and feedback, not public monetized launch |
-| D02 | Inventory entry | Manual entry **and** AI-assisted photo entry | Both P0 |
+| D02 | Inventory entry | Manual entry **and** on-device receipt OCR import | Both P0; replaces general product-image recognition in PR12 |
 | D03 | Recipes | Personalized, AI-generated recipes | P0; respect inventory and preferences |
 | D04 | Planning | Weekly meal planning is P1 | Not required for beta |
 | D05 | Household | Multiple users share a household | Household sharing promoted from P1 to P0 |
-| D06 | Photo input | Recognize multiple groceries in a single photo | Review/edit every suggestion before saving |
+| D06 | Receipt input | Extract multiple product rows from a receipt photo or screenshot using local OCR and deterministic Swedish parsing | Review/edit/select before saving; no cloud LLM or paid recognition service |
 | D07 | Invitations | Invite by link **or** email | Both are acceptable invitation methods; exact implementation TBD |
 | D08 | Expiry | Optional expiry dates and simple overview | No mandatory date, no push reminders |
 | D09 | Shopping | Check off purchases and offer to add them to inventory | Inventory additions require explicit confirmation |
+
+**Approved revision, 2026-11-14:** The product owner explicitly replaced PR12 general product-image recognition with OCR-only receipt import. D02, D06 and J03 now describe this replacement, not an additional recognition mode. Basic receipt OCR moves from historical P2 to P0; general grocery-photo recognition is outside this beta scope. No cloud LLM, cloud OCR fallback or paid service is authorized for receipt import. See [ADR-0009](adr/0009-receipt-import-ocr.md) and the [receipt import guide](receipt-import.md). Other AI use cases are unchanged by this decision.
 
 ## P0 — required for private beta
 
@@ -38,7 +40,8 @@ This document records **new product-owner decisions** made after blueprint v2.0.
 ### Kitchen inventory
 
 - Add, edit, remove, search and filter ingredients manually; record quantity, unit and storage location (fridge/freezer/pantry).
-- Take/select **one photo containing multiple food items**; show AI-detected candidates, allow correction/removal/addition, and save only after explicit confirmation.
+- Take/select **one receipt photo or screenshot**; run bundled on-device OCR and deterministic Swedish parsing, show candidate rows, allow correction/removal/addition/selection, and save only after explicit confirmation.
+- Distinguish food, non-food and unknown rows. Unknown content must not be treated as confirmed food. Package size in a product name is not evidence of purchased quantity. A missing quantity may be proposed as editable `1 st`, clearly labelled as a proposal; a missing storage location requires a choice.
 - Do not invent product identities, quantities, expiry dates or food-safety assurances. Uncertain fields must be reviewable or left blank.
 - Expiry date is optional. Show an understandable overview of items with dates approaching/passed; items without dates remain usable.
 - Shared household members see confirmed changes consistently.
@@ -76,7 +79,7 @@ The five-tab navigation in the original UX blueprint is a design target; the **P
 
 ## P2 — future exploration, not part of beta
 
-Receipt scanning, barcode/supermarket integrations, price comparisons, automatic replenishment, advanced nutrition, consumption prediction, voice, advanced household roles/permissions, and sophisticated meal-planning automation. No automatic purchases.
+Barcode/supermarket integrations, price comparisons, automatic replenishment, advanced nutrition, consumption prediction, voice, advanced household roles/permissions, and sophisticated meal-planning automation. Basic receipt OCR is now P0 by the explicit revision above; automatic retailer integrations and price-accounting features are not included. No automatic purchases.
 
 ## Primary user journeys and testable acceptance criteria
 
@@ -97,13 +100,14 @@ Receipt scanning, barcode/supermarket integrations, price comparisons, automatic
 
 **Pass when:** The entry persists, appears for both members, can be edited/deleted, and missing expiry is valid.
 
-### J03 — Multi-item AI photo
+### J03 — On-device receipt import
 
-1. A takes/selects a photo containing at least two distinct groceries.
-2. Cena returns multiple candidate items and indicates uncertain details.
-3. A corrects one candidate, removes an incorrect candidate and confirms.
+1. A takes/selects a receipt photo or screenshot containing at least two food product rows.
+2. Cena performs OCR on device and proposes rows using deterministic parsing, distinguishing food, non-food, unknown and unrecognized content.
+3. A corrects a candidate, excludes an incorrect/non-food row, reviews proposed quantities and chooses any missing storage location.
+4. A explicitly confirms between 1 and 30 selected items for the shared household.
 
-**Pass when:** No candidate is saved before confirmation; only approved items are persisted; a failed/empty recognition result can be retried or entered manually; no expiry is fabricated.
+**Pass when:** No image or raw OCR text is uploaded, logged or persisted by Cena; no inventory write occurs on selection, OCR, review, failure or cancellation. Only confirmed items are saved atomically through the existing authorized, idempotent bulk API. A retry does not duplicate that submission. Items are created separately, not silently merged with existing quantities. Missing quantities are labelled editable proposals, missing storage requires a choice, and no expiry or food-safety guarantee is inferred. Permission denial, failed/empty OCR and unsupported platforms offer retry where possible and manual entry. Complete the [manual verification matrix](receipt-import.md#manual-verification) on iOS and Android before claiming J03 passes; synthetic parser fixtures alone do not establish real receipt accuracy.
 
 ### J04 — Personalized recipe
 
@@ -152,7 +156,7 @@ These must be settled in the relevant design/architecture/issues work **before i
 | --- | --- |
 | Invite transport, link lifetime, expiry, revocation and abuse controls | Architecture/security ADR |
 | Household membership roles, ownership transfer and simultaneous-edit conflicts | Architecture/domain ADR; start with minimal safe permissions |
-| Supported image formats, photo limits, confidence UX and failure behavior | UX + AI specification |
+| Receipt formats, image limits and recovery behavior | ADR-0009 and receipt import guide; real-device verification remains required; wrapper has no OCR confidence scores |
 | Ingredient taxonomy, quantities/units and recipe matching semantics | Domain/API specification |
 | How to represent best-before vs use-by and which dates appear as “soon” | Product + food-safety UX decision |
 | Beta distribution, consent, feedback channel and privacy notices | Release checklist |

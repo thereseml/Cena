@@ -42,9 +42,9 @@ describe('UI accessibility and interaction states', () => {
 
   it('keeps a leading icon decorative while the button label remains its accessible name', async () => {
     const { getByRole, queryByText } = await render(
-      <Button label="Med foto" leadingIcon={<Text accessibilityLabel="Kameraikon">+</Text>} />,
+      <Button label="Skanna kvitto" leadingIcon={<Text accessibilityLabel="Kameraikon">+</Text>} />,
     );
-    const button = getByRole('button', { name: 'Med foto' });
+    const button = getByRole('button', { name: 'Skanna kvitto' });
 
     expect(button).toBeTruthy();
     expect(queryByText('Kameraikon')).toBeNull();

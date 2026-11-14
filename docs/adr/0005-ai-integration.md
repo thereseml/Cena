@@ -1,6 +1,6 @@
 # ADR-0005: AI service integration
 
-**Status:** Accepted for recipe and other AI integrations; food photo recognition superseded by [ADR-0008](0008-food-recognition-provider.md)
+**Status:** Accepted for recipe and other AI integrations; inventory photo input was superseded by ADR-0008 and is now replaced by receipt-only OCR in [ADR-0009](0009-receipt-import-ocr.md)
 
 ## Context
 
@@ -22,7 +22,7 @@ Photo recognition, personalized recipes and safe inventory mutations are P0. The
 
 ## Deferred implementation details
 
-Recipe model selection and recipe-specific evaluation remain deferred. Food photo recognition provider details are recorded in ADR-0008.
+Recipe model selection and recipe-specific evaluation remain deferred. ADR-0008 preserves the abandoned food photo provider decision; ADR-0009 governs the current receipt-only inventory import.
 
 ## References
 

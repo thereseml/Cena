@@ -1,0 +1,139 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 679acd5e216006933d5a39465621af87231ca83b..f926fd189bedb0e0f402460a95eb6bdb872d76b9 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -1,58 +1,16 @@
+-apply plugin: 'com.android.library'
++plugins {
++  id 'com.android.library'
++  id 'expo-module-gradle-plugin'
++}
+ 
+ group = 'red.infinite.reactnativemlkit.textrecognition'
+-version = '1.0.0'
+-
+-def expoModulesCorePlugin = new File(project(":expo-modules-core").projectDir.absolutePath, "ExpoModulesCorePlugin.gradle")
+-apply from: expoModulesCorePlugin
+-applyKotlinExpoModulesCorePlugin()
+-useCoreDependencies()
+-useExpoPublishing()
+-
+-buildscript {
+-  // Simple helper that allows the root project to override versions declared by this library.
+-  ext.safeExtGet = { prop, fallback ->
+-    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+-  }
+-
+-  // Ensures backward compatibility
+-  ext.getKotlinVersion = {
+-    if (ext.has("kotlinVersion")) {
+-      ext.kotlinVersion()
+-    } else {
+-      ext.safeExtGet("kotlinVersion", "1.8.10")
+-    }
+-  }
+-
+-  repositories {
+-    mavenCentral()
+-  }
+-
+-  dependencies {
+-    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${getKotlinVersion()}")
+-  }
+-}
+-project.android {
+-  compileSdkVersion safeExtGet("compileSdkVersion", 34)
+-  defaultConfig {
+-    minSdkVersion safeExtGet("minSdkVersion", 21)
+-    targetSdkVersion safeExtGet("targetSdkVersion", 34)
+-  }
+-}
++version = '5.0.1'
+ 
+ android {
+   namespace "red.infinite.reactnativemlkit.textrecognition"
+-  defaultConfig {
+-    versionCode 1
+-    versionName "1.0.0"
+-  }
+-  lintOptions {
+-    abortOnError false
+-  }
+ }
+ 
+ dependencies {
+-  implementation project(':expo-modules-core')
+   implementation project(path: ':infinitered-react-native-mlkit-core')
+   implementation 'com.google.mlkit:text-recognition:16.0.1'
+ }
+diff --git a/android/src/main/java/red/infinite/reactnativemlkit/textrecognition/RNMLKitTextRecognitionModule.kt b/android/src/main/java/red/infinite/reactnativemlkit/textrecognition/RNMLKitTextRecognitionModule.kt
+index 7500f9161425cc98d6d9a12e3154912315dc6851..57a57aaba648208525976dee673845080a36ba5c 100644
+--- a/android/src/main/java/red/infinite/reactnativemlkit/textrecognition/RNMLKitTextRecognitionModule.kt
++++ b/android/src/main/java/red/infinite/reactnativemlkit/textrecognition/RNMLKitTextRecognitionModule.kt
+@@ -25,13 +25,14 @@ class RNMLKitTextRecognitionModule : Module() {
+           .addOnSuccessListener { visionText ->
+             promise.resolve(mapTextToRecord(visionText))
+           }
+-          .addOnFailureListener { e ->
++          .addOnFailureListener {
+             promise.reject(
+               CodedException(
+-                "RNMLKitTextRecognitionModule - Error: ${e.message}", e
++                "Text recognition failed."
+               )
+             )
+           }
++          .addOnCompleteListener { recognizer.close() }
+       }
+     }
+   }
+diff --git a/ios/RNMLKitTextRecognitionModule.swift b/ios/RNMLKitTextRecognitionModule.swift
+index 0357141d6a10f9e2dc2d174d1cf82384d5cc4f29..5f88845246a3cee6937b59d5beda5a8b2d5e7efa 100644
+--- a/ios/RNMLKitTextRecognitionModule.swift
++++ b/ios/RNMLKitTextRecognitionModule.swift
+@@ -10,22 +10,18 @@ public class RNMLKitTextRecognitionModule: Module {
+     Name("RNMLKitTextRecognition")
+     
+     AsyncFunction("recognizeText") { (imagePath: String, promise: Promise) in
+-      let logger = Logger(logHandlers: [createOSLogHandler(category: Logger.EXPO_LOG_CATEGORY)])
+-      logger.info("RNMLKit", "recognize text: Recognizing text from image: \(imagePath) ")
+-      
+       let options = TextRecognizerOptions()
+       let textRecognizer = TextRecognizer.textRecognizer(options:options)
+       
+-      let image = try RNMLKitImage(imagePath: imagePath)
+-      
+       Task {
+         do {
++          let image = try RNMLKitImage(imagePath: imagePath)
+           let result = try await textRecognizer.process(image.visionImage)
+           
+           promise.resolve(mapTextToRecord(result))
+         } catch {
+           promise.reject(
+-              NSError(domain: ERROR_DOMAIN, code: 1, userInfo: [NSLocalizedDescriptionKey: "Error occurred: \(error)"])
++              NSError(domain: ERROR_DOMAIN, code: 1, userInfo: [NSLocalizedDescriptionKey: "Text recognition failed."])
+           )
+         }
+       }
+diff --git a/ios/RNMLKitTextRecord.swift b/ios/RNMLKitTextRecord.swift
+index 7672854c2280694a5ad258a515d8f8cc76955ad9..f83fb8e569229153e6058f277f54b063d76061ed 100644
+--- a/ios/RNMLKitTextRecord.swift
++++ b/ios/RNMLKitTextRecord.swift
+@@ -1,6 +1,7 @@
+ import ExpoModulesCore
+ import MLKitCommon
+ import MLKitTextRecognition
++import MLKitTextRecognitionCommon
+ 
+ struct RectRecord: Record {
+     @Field var left: Double = 0.0
+@@ -70,7 +71,7 @@ func mapTextBlockToRecord(_ textBlock: TextBlock) -> BlockRecord {
+     )
+ }
+ 
+-func mapTextToRecord(_ text: Text) -> TextRecord {
++func mapTextToRecord(_ text: MLKitTextRecognitionCommon.Text) -> TextRecord {
+     return TextRecord(
+         text: text.text,
+         blocks: text.blocks.map(mapTextBlockToRecord)

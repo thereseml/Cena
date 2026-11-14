@@ -7,9 +7,11 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "se.cena.app",
       "supportsTablet": true
     },
     "android": {
+      "package": "se.cena.app",
       "adaptiveIcon": {
         "backgroundColor": "#F8F6F0"
       }
@@ -19,8 +21,9 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Cena behöver använda kameran när du väljer att ta ett foto av dina matvaror.",
-          "photosPermission": "Välj ett foto av matvaror som Cena kan hjälpa dig att känna igen."
+          "cameraPermission": "Cena behöver använda kameran när du väljer att fotografera ett kvitto.",
+          "photosPermission": "Välj en kvittobild som Cena kan läsa på din enhet.",
+          "microphonePermission": false
         }
       ]
     ]

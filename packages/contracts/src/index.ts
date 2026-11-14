@@ -56,22 +56,6 @@ export interface SaveInventoryItemsInput {
   items: SaveInventoryItemInput[];
 }
 
-export type FoodRecognitionConfidence = 'HIGH' | 'MEDIUM' | 'LOW';
-
-export interface FoodSuggestion {
-  id: string;
-  name: string;
-  quantity: number | null;
-  unit: InventoryUnit | null;
-  description: string | null;
-  confidence: FoodRecognitionConfidence;
-  needsReview: true;
-}
-
-export interface FoodRecognitionResult {
-  items: FoodSuggestion[];
-}
-
 export interface UpdateInventoryItemInput extends SaveInventoryItemInput {
   expectedVersion: number;
 }

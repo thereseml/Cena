@@ -37,4 +37,6 @@ export const ProfileSettings: Story = { args: { location: '/profile' } };
 
 export const AddProduct: Story = { args: { location: '/add-product' } };
 
+export const ReceiptImport: Story = { args: { location: '/receipt-import' } };
+
 export const RecipeDetails: Story = { args: { location: '/recipe/tomato-pasta' } };

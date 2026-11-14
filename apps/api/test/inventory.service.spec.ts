@@ -1,5 +1,6 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { InventoryEventType, StorageLocation, InventoryUnit } from '@prisma/client';
+import { InventoryEventType, StorageLocation, InventoryUnit, Prisma } from '@prisma/client';
+import { createHash } from 'node:crypto';
 import { InventoryService } from '../src/inventory/inventory.service';
 
 const user = { id: 'supabase-user-id', email: 'anna@example.com' };
@@ -154,8 +155,7 @@ describe('InventoryService', () => {
   it('replays a complete bulk create without creating duplicate inventory events', async () => {
     const database = createDatabase();
     database.prisma.inventoryItem.findMany.mockImplementation(async ({ where }) => {
-      const requestIds = where.createRequestId.in as string[];
-      return requestIds.map((createRequestId) => ({ ...item, createRequestId }));
+      return [{ ...item, createRequestId: `${where.createRequestId.startsWith}0` }];
     });
     const service = new InventoryService(database.prisma as never);
 
@@ -166,6 +166,44 @@ describe('InventoryService', () => {
     expect(database.prisma.$transaction).not.toHaveBeenCalled();
     expect(database.transaction.inventoryEvent.create).not.toHaveBeenCalled();
   });
+
+  it.each([
+    [1, 1, true],
+    [2, 1, false],
+    [1, 2, false],
+  ])(
+    'checks the entire winning batch after a concurrent conflict (%i saved, %i requested)',
+    async (savedCount, requestedCount, matches) => {
+      const database = createDatabase();
+      const prefix = `bulk:${createHash('sha256').update(requestKey).digest('hex').slice(0, 32)}:`;
+      const saved = Array.from({ length: savedCount }, (_, index) => ({
+        ...item,
+        createRequestId: `${prefix}${index}`,
+      }));
+      database.prisma.inventoryItem.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce(saved);
+      database.prisma.$transaction.mockRejectedValueOnce(
+        new Prisma.PrismaClientKnownRequestError('Concurrent bulk create', {
+          code: 'P2002',
+          clientVersion: 'test',
+        }),
+      );
+      const service = new InventoryService(database.prisma as never);
+      const result = service.createMany(
+        user, householdId, { items: Array(requestedCount).fill(input) }, requestKey,
+      );
+
+      if (matches) await expect(result).resolves.toHaveLength(savedCount);
+      else await expect(result).rejects.toBeInstanceOf(ConflictException);
+      expect(database.prisma.inventoryItem.findMany).toHaveBeenCalledTimes(2);
+      expect(database.prisma.inventoryItem.findMany).toHaveBeenNthCalledWith(2, {
+        where: { householdId, createRequestId: { startsWith: prefix } },
+        include: { product: true, batches: { orderBy: { createdAt: 'asc' } } },
+      });
+      expect(database.transaction.inventoryEvent.create).not.toHaveBeenCalled();
+    },
+  );
 
   it('returns the original result for a duplicate add request without recording another event', async () => {
     const database = createDatabase();

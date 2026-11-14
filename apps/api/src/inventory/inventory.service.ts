@@ -107,7 +107,7 @@ export class InventoryService {
     const inputs = parseInventoryInputs(value);
     const batchRequestId = parseIdempotencyKey(requestKey);
     const requestIds = inputs.map((_, index) => bulkItemRequestId(batchRequestId, index));
-    const replay = await this.findBulkReplay(householdId, requestIds);
+    const replay = await this.findBulkReplay(householdId, batchRequestId);
     if (replay.length > 0) return this.returnBulkReplay(replay, inputs, requestIds);
 
     try {
@@ -129,7 +129,7 @@ export class InventoryService {
       if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
         throw error;
       }
-      const concurrentReplay = await this.findBulkReplay(householdId, requestIds);
+      const concurrentReplay = await this.findBulkReplay(householdId, batchRequestId);
       return this.returnBulkReplay(concurrentReplay, inputs, requestIds);
     }
   }
@@ -183,9 +183,9 @@ export class InventoryService {
     return this.toContract(item);
   }
 
-  private findBulkReplay(householdId: string, requestIds: string[]) {
+  private findBulkReplay(householdId: string, batchRequestId: string) {
     return this.prisma.inventoryItem.findMany({
-      where: { householdId, createRequestId: { in: requestIds } },
+      where: { householdId, createRequestId: { startsWith: bulkRequestPrefix(batchRequestId) } },
       include: { product: true, batches: { orderBy: { createdAt: 'asc' } } },
     });
   }
@@ -444,6 +444,10 @@ function normalizeName(name: string): string {
 }
 
 function bulkItemRequestId(requestId: string, index: number): string {
+  return `${bulkRequestPrefix(requestId)}${index}`;
+}
+
+function bulkRequestPrefix(requestId: string): string {
   const fingerprint = createHash('sha256').update(requestId).digest('hex').slice(0, 32);
-  return `bulk:${fingerprint}:${index}`;
+  return `bulk:${fingerprint}:`;
 }

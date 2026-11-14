@@ -6,7 +6,7 @@ Swedish-first kitchen assistant. This repository contains the minimal mobile/API
 
 - Node.js 22 LTS (or a compatible current LTS)
 - pnpm 10 (`corepack enable` and `corepack prepare pnpm@10.20.0 --activate`)
-- An emulator or development build for Expo SDK 58 (Expo Go availability varies by platform)
+- A custom native build for Expo SDK 58 to use receipt OCR; Expo Go does not include the OCR module. Web supports manual entry only. See the [receipt import build guide](docs/receipt-import.md).
 
 ## Get started
 
@@ -41,3 +41,5 @@ The simulator visual check does not verify installation or behavior on a physica
 Commit changes to dependency manifests together with `pnpm-lock.yaml`.
 
 Architecture: [ADRs](docs/adr/README.md). AI development instructions: [AGENTS.md](AGENTS.md) and [manual workflow](docs/development-workflow.md). The historical [blueprint](docs/blueprint.md) must remain unchanged.
+
+Current PR12 scope: [on-device receipt OCR import](docs/receipt-import.md), replacing general product-image recognition under [ADR-0009](docs/adr/0009-receipt-import-ocr.md). Its current native verification status is documented there; the scaffold verification above is historical, not a receipt-OCR test report.

@@ -1,0 +1,2 @@
+# Dependency patches must retain upstream context, including its whitespace.
+patches/*.patch -whitespace

@@ -1,6 +1,8 @@
 # ADR-0008: Food photo recognition provider
 
-**Status:** Accepted (product-owner decision, 2026-11-14)
+**Status:** Superseded by [ADR-0009: Receipt import OCR](0009-receipt-import-ocr.md) (product-owner decision, 2026-11-14)
+
+The product owner explicitly replaced PR12 general product-image recognition with on-device receipt OCR, without a cloud LLM or paid service. The original accepted decision below is retained as history, not current implementation authorization. ADR-0005's reference to this record is historical; follow ADR-0009 for receipt import. Recipe and other AI decisions are unaffected.
 
 ## Context
 

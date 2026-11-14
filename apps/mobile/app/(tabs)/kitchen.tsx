@@ -61,10 +61,10 @@ export default function KitchenScreen() {
             style={styles.actionButton}
           />
           <Button
-            label="Med foto"
+            label="Skanna kvitto"
             variant="secondary"
             leadingIcon={<Camera size={18} color={colors.brand.primary} strokeWidth={1.8} />}
-            onPress={() => router.push('/photo-recognition')}
+            onPress={() => router.push('/receipt-import')}
             style={styles.actionButton}
           />
         </View>

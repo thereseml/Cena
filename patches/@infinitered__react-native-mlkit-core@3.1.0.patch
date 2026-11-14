@@ -1,0 +1,174 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index db98d3dbc2c1f652ca6ea59f57830a81c8640861..00cba474f5ea44857a716a7262ac9b045e7435c9 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -1,91 +1,15 @@
+-apply plugin: 'com.android.library'
+-apply plugin: 'kotlin-android'
+-apply plugin: 'maven-publish'
+-
+-group = 'red.infinite.reactnativemlkit.core'
+-version = '0.1.0'
+-
+-buildscript {
+-  def expoModulesCorePlugin = new File(project(":expo-modules-core").projectDir.absolutePath, "ExpoModulesCorePlugin.gradle")
+-  if (expoModulesCorePlugin.exists()) {
+-    apply from: expoModulesCorePlugin
+-    applyKotlinExpoModulesCorePlugin()
+-  }
+-
+-  // Simple helper that allows the root project to override versions declared by this library.
+-  ext.safeExtGet = { prop, fallback ->
+-    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+-  }
+-
+-  // Ensures backward compatibility
+-  ext.getKotlinVersion = {
+-    if (ext.has("kotlinVersion")) {
+-      ext.kotlinVersion()
+-    } else {
+-      ext.safeExtGet("kotlinVersion", "1.8.10")
+-    }
+-  }
+-
+-  repositories {
+-    mavenCentral()
+-  }
+-
+-  dependencies {
+-    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${getKotlinVersion()}")
+-  }
++plugins {
++  id 'com.android.library'
++  id 'expo-module-gradle-plugin'
+ }
+ 
+-afterEvaluate {
+-  publishing {
+-    publications {
+-      release(MavenPublication) {
+-        from components.release
+-      }
+-    }
+-    repositories {
+-      maven {
+-        url = mavenLocal().url
+-      }
+-    }
+-  }
+-}
++group = 'red.infinite.reactnativemlkit.core'
++version = '3.1.0'
+ 
+ android {
+   namespace "red.infinite.reactnativemlkit.core"
+-  compileSdkVersion safeExtGet("compileSdkVersion", 34)
+-
+-  compileOptions {
+-    sourceCompatibility JavaVersion.VERSION_17
+-    targetCompatibility JavaVersion.VERSION_17
+-  }
+-
+-  kotlinOptions {
+-    jvmTarget = JavaVersion.VERSION_17.majorVersion
+-  }
+-
+-
+-  defaultConfig {
+-    minSdkVersion safeExtGet("minSdkVersion", 21)
+-    targetSdkVersion safeExtGet("targetSdkVersion", 34)
+-    versionCode 1
+-    versionName "0.1.0"
+-  }
+-  lintOptions {
+-    abortOnError false
+-  }
+-  publishing {
+-    singleVariant("release") {
+-      withSourcesJar()
+-    }
+-  }
+-}
+-
+-repositories {
+-  mavenCentral()
+ }
+ 
+ dependencies {
+-  implementation project(':expo-modules-core')
+-  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${getKotlinVersion()}"
+-  implementation "com.google.mlkit:vision-common:17.+"
++  implementation "com.google.mlkit:vision-common:17.3.0"
+ }
+diff --git a/android/src/main/java/red/infinite/reactnativemlkit/core/RNMLKitImage.kt b/android/src/main/java/red/infinite/reactnativemlkit/core/RNMLKitImage.kt
+index e000887e072af9b7375d1315ee7bd49d2912bc4c..d23bed7b74497e493d8d845e6789a254a652221b 100644
+--- a/android/src/main/java/red/infinite/reactnativemlkit/core/RNMLKitImage.kt
++++ b/android/src/main/java/red/infinite/reactnativemlkit/core/RNMLKitImage.kt
+@@ -2,7 +2,6 @@ package red.infinite.reactnativemlkit.core
+ 
+ import android.content.Context
+ import android.net.Uri
+-import android.util.Log
+ import com.google.mlkit.vision.common.InputImage
+ 
+ 
+@@ -20,12 +19,10 @@ class RNMLKitImage(private var _imagePath: Uri, context: Context) {
+         }
+ 
+     init {
+-        Log.d("RNMLKit", "RNMLKitImage: Loading Image from $_imagePath")
+         try {
+-            Log.d("RNMLKit", "RNMLKitImage: Reading Bitmap")
+             _image = InputImage.fromFilePath(context, _imagePath)
+-        } catch (e: Exception) {
+-            throw Exception("RNMLKitImage: Could not load image from $_imagePath", e)
++        } catch (_: Exception) {
++            throw Exception("RNMLKitImage: Could not load image")
+         }
+     }
+ }
+diff --git a/android/src/main/java/red/infinite/reactnativemlkit/core/RNMLKitModule.kt b/android/src/main/java/red/infinite/reactnativemlkit/core/RNMLKitModule.kt
+index 7897835a5ab11ce8d9d539bc7a8b5477d158b5ad..3c895e5ecbd90efd9150e38250f7371bc4535983 100644
+--- a/android/src/main/java/red/infinite/reactnativemlkit/core/RNMLKitModule.kt
++++ b/android/src/main/java/red/infinite/reactnativemlkit/core/RNMLKitModule.kt
+@@ -9,8 +9,6 @@ abstract class RNMLKitModule(private val logTag: String) : Module() {
+     protected val log = RNMLKitLog(logTag)
+ 
+     protected fun handleException(promise: Promise, e: Throwable? = null, message: String? = null) {
+-        val errorMessage = message ?: "$logTag - Error: ${e?.message}"
+-        log.e("Error: $errorMessage", e)
+-        promise.reject(CodedException(errorMessage, e))
++        promise.reject(CodedException("RNMLKit operation failed."))
+     }
+ }
+diff --git a/ios/RNMLKitImage.swift b/ios/RNMLKitImage.swift
+index ff4dce49c43856740ba22b1f21440632dc2dbc23..c4cd0066a377576af958fb8728bbedc9b19d8e53 100644
+--- a/ios/RNMLKitImage.swift
++++ b/ios/RNMLKitImage.swift
+@@ -2,8 +2,8 @@ import Foundation
+ import MLKitVision
+ 
+ public enum RNMLKitImageError: Error {
+-    case invalidImageURL(imagePath: String)
+-    case couldNotLoadImage(imagePath: String)
++    case invalidImageURL
++    case couldNotLoadImage
+ }
+ 
+ public class RNMLKitImage {
+@@ -13,13 +13,13 @@ public class RNMLKitImage {
+ 
+     public init(imagePath: String) throws {
+         guard let imageURL = URL(string: imagePath) else {
+-            throw RNMLKitImageError.invalidImageURL(imagePath: imagePath)
++            throw RNMLKitImageError.invalidImageURL
+         }
+ 
+         self.imageURL = imageURL
+ 
+         guard let originalUIImage = UIImage(contentsOfFile: imageURL.path) else {
+-            throw RNMLKitImageError.couldNotLoadImage(imagePath: imageURL.path)
++            throw RNMLKitImageError.couldNotLoadImage
+         }
+ 
+         self.uiImage = originalUIImage.fixedOrientation() // Normalize orientation

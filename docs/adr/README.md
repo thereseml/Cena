@@ -11,7 +11,8 @@ Architecture Decision Records (ADRs) capture **approved technical choices** inde
 | [0005](0005-ai-integration.md)                | OpenAI API through NestJS for general/recipe AI integrations    | Accepted |
 | [0006](0006-hosting-deferred.md)              | Hosting explicitly deferred                                     | Deferred |
 | [0007](0007-auth-and-household-foundation.md) | Email OTP, JWKS verification and idempotent household bootstrap | Accepted |
-| [0008](0008-food-recognition-provider.md)     | Cloudflare Workers AI for food photo recognition                | Accepted |
+| [0008](0008-food-recognition-provider.md)     | Cloudflare Workers AI for food photo recognition                | Superseded by 0009 |
+| [0009](0009-receipt-import-ocr.md)            | On-device receipt OCR and deterministic Swedish parsing         | Accepted |
 
 ## Implementation gates not yet approved
 
@@ -20,7 +21,7 @@ The decisions above establish technology boundaries, **not** an executable deplo
 1. **Authorization and household lifecycle:** membership validation for every request; invitation link/email acceptance, expiry, revocation, roles and household deletion; cross-household isolation tests.
 2. **Database access and transactions:** migration ownership, Prisma connection pooling compatible with the selected Supabase connection method, tenant-scoped queries, idempotency and concurrent inventory updates.
 3. **Auth integration:** token verification/JWKS, session refresh, signup/invite flow, server trust boundary and Row Level Security policy (defense in depth if used).
-4. **AI contracts:** validated structured recognition and recipe schemas, image upload/privacy/retention, timeouts, rate limits, cost caps, safety/uncertainty UX and evaluation fixtures.
+4. **AI contracts:** validated recipe schemas, timeouts, rate limits, cost caps, safety/uncertainty UX and evaluation fixtures. Receipt import instead follows ADR-0009: local OCR, no raw image/text upload, deterministic parsing and explicit confirmation; native/device verification remains a release gate.
 5. **Operations:** API hosting, environments, secret management, deployment, backup/restore, observability and beta distribution before external beta.
 6. **API contracts:** typed REST client, error format, API versioning and concurrency semantics before frontend/backend parallel implementation.
 

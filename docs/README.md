@@ -7,10 +7,10 @@ Start here when working with Codex, GPT or OpenCode. Read only the documents rel
 | Task                                                              | Read                                                                     |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | **Manual Codex/OpenCode development process**                     | [development-workflow.md](development-workflow.md)                       |
-| **Accepted architecture decisions and open implementation gates** | [adr/README.md](adr/README.md) (ADRs 0001–0008)                          |
+| **Architecture decisions and open implementation gates**          | [adr/README.md](adr/README.md) (ADRs 0001–0009; includes superseded decisions) |
 | Authentication, local Supabase setup and household provisioning   | [auth-household-foundation.md](auth-household-foundation.md)             |
 | Household inventory model, API, expiry and local workflow         | [inventory.md](inventory.md)                                             |
-| **AI-assisted food photo recognition and provider setup**         | [food-photo-recognition.md](food-photo-recognition.md)                   |
+| **On-device receipt OCR, local builds and manual verification**   | [receipt-import.md](receipt-import.md)                                   |
 | **Approved private-beta MVP scope and acceptance criteria**       | [mvp-scope.md](mvp-scope.md) (new product-owner decisions)               |
 | Product vision, decisions, scope and risks                        | [product.md](product.md) (sections 1, 2, 3, 4, 19, 26, 27)               |
 | Navigation, journeys, screen requirements and accessibility       | [experience.md](experience.md) (sections 5, 7, 17)                       |
