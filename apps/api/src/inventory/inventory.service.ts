@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import type { InventoryItem as InventoryItemContract } from '@cena/contracts';
 import {
   ExpirySource,
@@ -20,6 +21,7 @@ import {
   parseExpectedVersion,
   parseIdempotencyKey,
   parseInventoryInput,
+  parseInventoryInputs,
   unitFromDatabase,
   unitToDatabase,
 } from './inventory-validation';
@@ -82,51 +84,9 @@ export class InventoryService {
     if (replay) return this.returnCreateReplay(replay, input);
 
     try {
-      return await this.prisma.$transaction(async (transaction) => {
-        const normalizedName = normalizeName(input.name);
-        const ingredient = await transaction.ingredient.upsert({
-          where: { normalizedName },
-          create: { name: input.name, normalizedName },
-          update: {},
-        });
-        const product = await transaction.product.upsert({
-          where: { normalizedName },
-          create: { ingredientId: ingredient.id, name: input.name, normalizedName },
-          update: { ingredientId: ingredient.id },
-        });
-        const item = await transaction.inventoryItem.create({
-          data: {
-            householdId,
-            createRequestId,
-            productId: product.id,
-            displayName: input.name,
-            unit: unitToDatabase(input.unit),
-            storageLocation: STORAGE_LOCATION_TO_DATABASE[input.storageLocation],
-            batches: {
-              create: {
-                quantity: input.quantity,
-                expiryDate: dateToDatabase(input.expiryDate),
-                expiryType: input.expiryType ? EXPIRY_TYPE_TO_DATABASE[input.expiryType] : null,
-                expirySource: input.expirySource
-                  ? EXPIRY_SOURCE_TO_DATABASE[input.expirySource]
-                  : null,
-              },
-            },
-          },
-          include: { product: true, batches: true },
-        });
-        await transaction.inventoryEvent.create({
-          data: {
-            householdId,
-            inventoryItemId: item.id,
-            productBatchId: item.batches[0].id,
-            eventType: InventoryEventType.ADDED,
-            quantityDelta: input.quantity,
-            unit: unitToDatabase(input.unit),
-          },
-        });
-        return this.toContract(item);
-      });
+      return await this.prisma.$transaction((transaction) =>
+        this.createInventoryItem(transaction, householdId, input, createRequestId),
+      );
     } catch (error) {
       if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
         throw error;
@@ -135,6 +95,116 @@ export class InventoryService {
       if (!concurrentReplay) throw error;
       return this.returnCreateReplay(concurrentReplay, input);
     }
+  }
+
+  async createMany(
+    user: AuthenticatedUser,
+    householdId: string,
+    value: unknown,
+    requestKey: unknown,
+  ): Promise<InventoryItemContract[]> {
+    await this.authorizeHousehold(user.id, householdId);
+    const inputs = parseInventoryInputs(value);
+    const batchRequestId = parseIdempotencyKey(requestKey);
+    const requestIds = inputs.map((_, index) => bulkItemRequestId(batchRequestId, index));
+    const replay = await this.findBulkReplay(householdId, batchRequestId);
+    if (replay.length > 0) return this.returnBulkReplay(replay, inputs, requestIds);
+
+    try {
+      return await this.prisma.$transaction(async (transaction) => {
+        const created: InventoryItemContract[] = [];
+        for (let index = 0; index < inputs.length; index += 1) {
+          created.push(
+            await this.createInventoryItem(
+              transaction,
+              householdId,
+              inputs[index],
+              requestIds[index],
+            ),
+          );
+        }
+        return created;
+      });
+    } catch (error) {
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+        throw error;
+      }
+      const concurrentReplay = await this.findBulkReplay(householdId, batchRequestId);
+      return this.returnBulkReplay(concurrentReplay, inputs, requestIds);
+    }
+  }
+
+  private async createInventoryItem(
+    transaction: Prisma.TransactionClient,
+    householdId: string,
+    input: ReturnType<typeof parseInventoryInput>,
+    createRequestId: string,
+  ): Promise<InventoryItemContract> {
+    const normalizedName = normalizeName(input.name);
+    const ingredient = await transaction.ingredient.upsert({
+      where: { normalizedName },
+      create: { name: input.name, normalizedName },
+      update: {},
+    });
+    const product = await transaction.product.upsert({
+      where: { normalizedName },
+      create: { ingredientId: ingredient.id, name: input.name, normalizedName },
+      update: { ingredientId: ingredient.id },
+    });
+    const item = await transaction.inventoryItem.create({
+      data: {
+        householdId,
+        createRequestId,
+        productId: product.id,
+        displayName: input.name,
+        unit: unitToDatabase(input.unit),
+        storageLocation: STORAGE_LOCATION_TO_DATABASE[input.storageLocation],
+        batches: {
+          create: {
+            quantity: input.quantity,
+            expiryDate: dateToDatabase(input.expiryDate),
+            expiryType: input.expiryType ? EXPIRY_TYPE_TO_DATABASE[input.expiryType] : null,
+            expirySource: input.expirySource ? EXPIRY_SOURCE_TO_DATABASE[input.expirySource] : null,
+          },
+        },
+      },
+      include: { product: true, batches: true },
+    });
+    await transaction.inventoryEvent.create({
+      data: {
+        householdId,
+        inventoryItemId: item.id,
+        productBatchId: item.batches[0].id,
+        eventType: InventoryEventType.ADDED,
+        quantityDelta: input.quantity,
+        unit: unitToDatabase(input.unit),
+      },
+    });
+    return this.toContract(item);
+  }
+
+  private findBulkReplay(householdId: string, batchRequestId: string) {
+    return this.prisma.inventoryItem.findMany({
+      where: { householdId, createRequestId: { startsWith: bulkRequestPrefix(batchRequestId) } },
+      include: { product: true, batches: { orderBy: { createdAt: 'asc' } } },
+    });
+  }
+
+  private returnBulkReplay(
+    foundItems: InventoryItemWithBatches[],
+    inputs: ReturnType<typeof parseInventoryInput>[],
+    requestIds: string[],
+  ): InventoryItemContract[] {
+    if (foundItems.length !== requestIds.length) {
+      throw new ConflictException('Begäran om att lägga till varor har redan delvis använts.');
+    }
+    const itemsByRequestId = new Map(foundItems.map((item) => [item.createRequestId, item]));
+    return requestIds.map((requestId, index) => {
+      const item = itemsByRequestId.get(requestId);
+      if (!item)
+        throw new ConflictException('Begäran om att lägga till varor kunde inte bekräftas.');
+      return this.returnCreateReplay(item, inputs[index]);
+    });
   }
 
   async update(
@@ -371,4 +441,13 @@ function sumBatchQuantities(batches: Array<{ quantity: { toString(): string } }>
 
 function normalizeName(name: string): string {
   return name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('sv-SE');
+}
+
+function bulkItemRequestId(requestId: string, index: number): string {
+  return `${bulkRequestPrefix(requestId)}${index}`;
+}
+
+function bulkRequestPrefix(requestId: string): string {
+  const fingerprint = createHash('sha256').update(requestId).digest('hex').slice(0, 32);
+  return `bulk:${fingerprint}:`;
 }

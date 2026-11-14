@@ -4,6 +4,7 @@ const config: StorybookConfig = {
   stories: [
     '../../../packages/ui/src/**/*.stories.tsx',
     '../components/**/*.stories.tsx',
+    '../features/**/*.stories.tsx',
     '../storybook/**/*.stories.tsx',
   ],
   deviceAddons: ['@storybook/addon-ondevice-controls', '@storybook/addon-ondevice-actions'],

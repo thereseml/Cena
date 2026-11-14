@@ -52,6 +52,10 @@ export interface SaveInventoryItemInput {
   expirySource: ExpirySource | null;
 }
 
+export interface SaveInventoryItemsInput {
+  items: SaveInventoryItemInput[];
+}
+
 export interface UpdateInventoryItemInput extends SaveInventoryItemInput {
   expectedVersion: number;
 }

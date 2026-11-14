@@ -1,6 +1,7 @@
 import type { InventoryItem } from '@cena/contracts';
 import { Badge, ListItem, colors, spacing, Text } from '@cena/ui';
 import { StyleSheet, View } from 'react-native';
+import { ArrowRight } from 'lucide-react-native';
 import { getExpiryLabel } from '../features/inventory/expiry';
 
 export interface InventoryItemRowProps {
@@ -15,16 +16,26 @@ export function InventoryItemRow({ item, onPress }: InventoryItemRowProps) {
     .filter((batch) => batch.expiryDate !== null && batch.expiryType !== null)
     .sort((left, right) => (left.expiryDate ?? '').localeCompare(right.expiryDate ?? ''))[0];
   const expiry = earliestExpiryBatch ? getExpiryLabel(earliestExpiryBatch) : null;
+  const quantity = formatQuantity(item.quantity);
+  const location = LOCATION_LABELS[item.storageLocation];
+  const accessibilityLabel = `${item.name}, ${quantity} ${item.unit}, ${location}${expiry ? `, ${expiry.text}` : ''}`;
 
   return (
     <ListItem
       onPress={onPress}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={onPress ? 'Öppnar varans detaljer' : undefined}
       trailing={
-        expiry && expiry.urgency !== 'none' ? (
-          <Badge
-            label={expiry.urgency === 'passed' ? 'Datum passerat' : 'Använd snart'}
-            variant={expiry.urgency === 'passed' ? 'error' : 'warning'}
-          />
+        onPress || (expiry && expiry.urgency !== 'none') ? (
+          <View style={styles.trailing}>
+            {expiry && expiry.urgency !== 'none' ? (
+              <Badge
+                label={expiry.urgency === 'passed' ? 'Datum passerat' : 'Använd snart'}
+                variant={expiry.urgency === 'passed' ? 'error' : 'warning'}
+              />
+            ) : null}
+            {onPress ? <ArrowRight size={18} color={colors.text.muted} strokeWidth={1.8} /> : null}
+          </View>
         ) : undefined
       }
     >
@@ -33,13 +44,10 @@ export function InventoryItemRow({ item, onPress }: InventoryItemRowProps) {
           {item.name}
         </Text>
         <Text variant="bodySmall">
-          {formatQuantity(item.quantity)} {item.unit} · {LOCATION_LABELS[item.storageLocation]}
+          {quantity} {item.unit} · {location}
         </Text>
         {expiry ? (
-          <Text
-            variant="caption"
-            style={expiry.urgency === 'none' ? styles.expiry : styles.expiring}
-          >
+          <Text variant="caption" style={styles[expiry.urgency]}>
             {expiry.text}
           </Text>
         ) : null}
@@ -51,8 +59,10 @@ export function InventoryItemRow({ item, onPress }: InventoryItemRowProps) {
 const styles = StyleSheet.create({
   content: { gap: spacing.xs },
   name: { color: colors.brand.primary },
-  expiry: { color: colors.text.muted },
-  expiring: { color: colors.semantic.warning },
+  none: { color: colors.text.muted },
+  soon: { color: colors.semantic.warning },
+  passed: { color: colors.semantic.error },
+  trailing: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
 });
 
 function formatQuantity(quantity: number): string {

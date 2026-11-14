@@ -1,5 +1,6 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { InventoryEventType, StorageLocation, InventoryUnit } from '@prisma/client';
+import { InventoryEventType, StorageLocation, InventoryUnit, Prisma } from '@prisma/client';
+import { createHash } from 'node:crypto';
 import { InventoryService } from '../src/inventory/inventory.service';
 
 const user = { id: 'supabase-user-id', email: 'anna@example.com' };
@@ -51,6 +52,7 @@ function createDatabase() {
     inventoryItem: {
       create: jest.fn().mockResolvedValue({ ...item, product: { name: 'Mjölk' } }),
       findFirst: jest.fn().mockResolvedValue(item),
+      findMany: jest.fn().mockResolvedValue([item]),
       updateMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
     productBatch: { update: jest.fn().mockResolvedValue(batch) },
@@ -111,6 +113,97 @@ describe('InventoryService', () => {
       }),
     });
   });
+
+  it('creates a bulk inventory request in one transaction', async () => {
+    const database = createDatabase();
+    database.prisma.inventoryItem.findMany.mockResolvedValue([]);
+    database.transaction.inventoryItem.create
+      .mockResolvedValueOnce({ ...item, product: { name: 'Mjölk' } })
+      .mockResolvedValueOnce({
+        ...item,
+        id: '00000000-0000-4000-8000-000000000004',
+        batches: [{ ...batch, id: '00000000-0000-4000-8000-000000000005' }],
+        product: { name: 'Ägg' },
+      });
+    const service = new InventoryService(database.prisma as never);
+    const entries = [
+      input,
+      {
+        ...input,
+        name: 'Ägg',
+        quantity: 6,
+        unit: 'st',
+        expiryDate: null,
+        expiryType: null,
+        expirySource: null,
+      },
+    ];
+
+    const result = await service.createMany(
+      user,
+      householdId,
+      { items: entries },
+      'recognition:request-123',
+    );
+
+    expect(result).toHaveLength(2);
+    expect(database.prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(database.transaction.inventoryItem.create).toHaveBeenCalledTimes(2);
+    expect(database.transaction.inventoryEvent.create).toHaveBeenCalledTimes(2);
+  });
+
+  it('replays a complete bulk create without creating duplicate inventory events', async () => {
+    const database = createDatabase();
+    database.prisma.inventoryItem.findMany.mockImplementation(async ({ where }) => {
+      return [{ ...item, createRequestId: `${where.createRequestId.startsWith}0` }];
+    });
+    const service = new InventoryService(database.prisma as never);
+
+    await expect(
+      service.createMany(user, householdId, { items: [input] }, 'recognition:request-123'),
+    ).resolves.toHaveLength(1);
+
+    expect(database.prisma.$transaction).not.toHaveBeenCalled();
+    expect(database.transaction.inventoryEvent.create).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [1, 1, true],
+    [2, 1, false],
+    [1, 2, false],
+  ])(
+    'checks the entire winning batch after a concurrent conflict (%i saved, %i requested)',
+    async (savedCount, requestedCount, matches) => {
+      const database = createDatabase();
+      const prefix = `bulk:${createHash('sha256').update(requestKey).digest('hex').slice(0, 32)}:`;
+      const saved = Array.from({ length: savedCount }, (_, index) => ({
+        ...item,
+        createRequestId: `${prefix}${index}`,
+      }));
+      database.prisma.inventoryItem.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce(saved);
+      database.prisma.$transaction.mockRejectedValueOnce(
+        new Prisma.PrismaClientKnownRequestError('Concurrent bulk create', {
+          code: 'P2002',
+          clientVersion: 'test',
+        }),
+      );
+      const service = new InventoryService(database.prisma as never);
+      const result = service.createMany(
+        user, householdId, { items: Array(requestedCount).fill(input) }, requestKey,
+      );
+
+      if (matches) await expect(result).resolves.toHaveLength(savedCount);
+      else await expect(result).rejects.toBeInstanceOf(ConflictException);
+      expect(database.prisma.inventoryItem.findMany).toHaveBeenCalledTimes(2);
+      expect(database.prisma.inventoryItem.findMany).toHaveBeenNthCalledWith(2, {
+        where: { householdId, createRequestId: { startsWith: prefix } },
+        include: { product: true, batches: { orderBy: { createdAt: 'asc' } } },
+      });
+      expect(database.transaction.inventoryEvent.create).not.toHaveBeenCalled();
+    },
+  );
 
   it('returns the original result for a duplicate add request without recording another event', async () => {
     const database = createDatabase();

@@ -38,6 +38,16 @@ export class InventoryController {
     return this.inventory.create(user, householdId, body, idempotencyKey);
   }
 
+  @Post('bulk')
+  createMany(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('householdId', new ParseUUIDPipe()) householdId: string,
+    @Body() body: unknown,
+    @Headers('idempotency-key') idempotencyKey: string | undefined,
+  ) {
+    return this.inventory.createMany(user, householdId, body, idempotencyKey);
+  }
+
   @Get(':itemId')
   get(
     @CurrentUser() user: AuthenticatedUser,
