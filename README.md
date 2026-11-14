@@ -6,7 +6,7 @@ Swedish-first kitchen assistant. This repository contains the minimal mobile/API
 
 - Node.js 22 LTS (or a compatible current LTS)
 - pnpm 10 (`corepack enable` and `corepack prepare pnpm@10.20.0 --activate`)
-- An emulator or development build for Expo SDK 58 (Expo Go availability varies by platform)
+- Expo Go compatible with Expo SDK 58 for iOS/Android receipt OCR. No custom native build is needed for this flow. Web supports manual entry only. See the [receipt import guide](docs/receipt-import.md).
 
 ## Get started
 
@@ -16,7 +16,9 @@ pnpm --filter @cena/mobile dev
 pnpm --filter @cena/api dev
 ```
 
-Mobile: Expo development server (scan QR code or use emulator). API: `http://localhost:3000/health` returns `{ "status": "ok" }`.
+Mobile: Expo development server (scan the QR code in Expo Go or use a simulator). To explicitly select Expo Go and clear stale Metro state after the OCR dependency change, use `pnpm --filter @cena/mobile exec expo start --go --clear` instead of the mobile `dev` command. `pnpm dev` starts the workspace development servers together. API: `http://localhost:3000/health` returns `{ "status": "ok" }`.
+
+For a phone, keep the computer and phone on the same LAN and set the existing `EXPO_PUBLIC_API_URL` in `apps/mobile/.env` to the computer's reachable LAN address, including `/api/v1`. A phone's `localhost` is not the development computer. The API must be reachable from that network for inventory/authenticated API operations; OCR itself runs locally once Metro has delivered the bundled assets. Only public client configuration belongs in `EXPO_PUBLIC_*`, never server secrets.
 
 Useful commands: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`.
 
@@ -41,3 +43,5 @@ The simulator visual check does not verify installation or behavior on a physica
 Commit changes to dependency manifests together with `pnpm-lock.yaml`.
 
 Architecture: [ADRs](docs/adr/README.md). AI development instructions: [AGENTS.md](AGENTS.md) and [manual workflow](docs/development-workflow.md). The historical [blueprint](docs/blueprint.md) must remain unchanged.
+
+Current PR12 scope: [on-device receipt OCR import](docs/receipt-import.md), replacing general product-image recognition under [ADR-0009](docs/adr/0009-receipt-import-ocr.md). [ADR-0010](docs/adr/0010-expo-go-receipt-ocr.md) replaces its ML Kit/custom-build choice with bundled Tesseract.js 7 in an Expo Go WebView, not its receipt-only scope. The guide separates simulator evidence from physical-device and Android checks still required; the scaffold verification above is historical, not a current receipt-OCR test report.
