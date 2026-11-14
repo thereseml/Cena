@@ -96,6 +96,17 @@ export function parseInventoryInput(
   };
 }
 
+export function parseInventoryInputs(value: unknown): SaveInventoryItemInput[] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new BadRequestException('Kontrollera varorna och försök igen.');
+  }
+  const items = (value as Record<string, unknown>).items;
+  if (!Array.isArray(items) || items.length === 0 || items.length > 30) {
+    throw new BadRequestException('Välj mellan 1 och 30 varor att lägga till.');
+  }
+  return items.map((item) => parseInventoryInput(item));
+}
+
 export function parseExpectedVersion(value: unknown): number {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new BadRequestException('Läs in varan igen innan du sparar ändringar.');

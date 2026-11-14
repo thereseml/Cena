@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Text } from './Text';
 import { colors, spacing } from './theme';
 
@@ -7,11 +7,12 @@ export interface ScreenHeaderProps {
   title: string;
   eyebrow?: string;
   trailing?: ReactNode;
+  style?: StyleProp<ViewStyle>;
 }
 
-export function ScreenHeader({ title, eyebrow, trailing }: ScreenHeaderProps) {
+export function ScreenHeader({ title, eyebrow, trailing, style }: ScreenHeaderProps) {
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, style]}>
       <View style={styles.heading}>
         {eyebrow ? (
           <Text variant="caption" style={styles.eyebrow}>

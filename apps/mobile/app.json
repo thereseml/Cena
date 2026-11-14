@@ -7,13 +7,26 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "se.cena.app",
       "supportsTablet": true
     },
     "android": {
+      "package": "se.cena.app",
       "adaptiveIcon": {
         "backgroundColor": "#F8F6F0"
       }
     },
-    "plugins": ["expo-router"]
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Cena behöver använda kameran när du väljer att fotografera ett kvitto.",
+          "photosPermission": "Välj en kvittobild som Cena kan läsa på din enhet.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-asset"
+    ]
   }
 }

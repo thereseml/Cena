@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-native';
-import { IconButton, Text } from '@cena/ui';
+import { Card, IconButton, spacing, Text } from '@cena/ui';
 import { ScreenHeader } from './ScreenHeader';
 
 const meta = {
@@ -23,4 +23,15 @@ export const WithTrailingAction: Story = {
 
 export const LongTitle: Story = {
   args: { title: 'Profil och inställningar', eyebrow: 'DITT CENA-KONTO' },
+};
+
+export const CompactSpacing: Story = {
+  render: () => (
+    <>
+      <ScreenHeader title="Mitt kök" eyebrow="6 VAROR" style={{ marginBottom: spacing.sm }} />
+      <Card>
+        <Text variant="bodySmall">Nästa åtgärd</Text>
+      </Card>
+    </>
+  ),
 };

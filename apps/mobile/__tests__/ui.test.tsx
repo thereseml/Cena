@@ -40,6 +40,30 @@ describe('UI accessibility and interaction states', () => {
     expect(onPress).not.toHaveBeenCalled();
   });
 
+  it('keeps a leading icon decorative while the button label remains its accessible name', async () => {
+    const { getByRole, queryByText } = await render(
+      <Button label="Skanna kvitto" leadingIcon={<Text accessibilityLabel="Kameraikon">+</Text>} />,
+    );
+    const button = getByRole('button', { name: 'Skanna kvitto' });
+
+    expect(button).toBeTruthy();
+    expect(queryByText('Kameraikon')).toBeNull();
+  });
+
+  it('supports a compact input with an explicit accessible label and decorative leading icon', async () => {
+    const { getByLabelText, queryByText } = await render(
+      <Input
+        accessibilityLabel="Sök i ditt kök"
+        placeholder="Sök efter mat..."
+        leadingIcon={<Text>⌕</Text>}
+      />,
+    );
+
+    expect(getByLabelText('Sök i ditt kök')).toBeTruthy();
+    expect(queryByText('⌕')).toBeTruthy();
+    expect(queryByText('Sök i ditt kök')).toBeNull();
+  });
+
   it('keeps a non-editable input announced as disabled and exposes its error hint', async () => {
     const { getByLabelText } = await render(
       <Input
