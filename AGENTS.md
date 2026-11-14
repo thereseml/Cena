@@ -242,59 +242,100 @@ Shared components should be reusable without depending on feature-specific busin
 
 Do not introduce a new UI framework without approval.
 
-## 7. Storybook Development Rules
+## 7. Storybook and Component-First Development
 
 Cena uses Storybook as its component development and visual documentation environment.
 
-### Storybook by default
+### Mandatory component-first workflow
 
-For every new or significantly modified reusable visual component:
+For every task that creates or modifies React Native UI:
 
-1. Inspect existing components and stories.
-2. Implement or update the component.
-3. Create or update relevant Storybook stories.
-4. Demonstrate important variants and states.
-5. Verify rendering in Storybook when available.
-6. Integrate the component into the application.
+1. Inspect existing components in `packages/ui`.
+2. Inspect relevant feature-specific components.
+3. Inspect existing Storybook stories.
+4. Identify reusable patterns before implementing new UI.
+5. Reuse an existing component whenever appropriate.
+6. Extend an existing component when the improvement is broadly reusable.
+7. Create a new component only when existing solutions are insufficient.
+8. Add or update Storybook stories for new or materially modified reusable visual components.
+9. Integrate the components into the application.
+10. Verify rendering, accessibility and relevant functionality.
 
-### Story coverage
+**Do not begin implementing new UI components before checking existing reusable solutions.**
 
-Include relevant examples such as:
+### Component ownership
 
-- Default
-- Visual variants
-- Disabled
-- Loading
-- Error
-- Empty
-- Long text
-- Accessibility-relevant states
+Generic, application-independent visual components belong in `packages/ui` and must be imported through `@cena/ui`.
 
-Only include states that are meaningful for the component.
+Feature-specific components belong near their owning feature.
 
-Do not generate every possible prop combination.
+A component should not be moved into `packages/ui` merely because it appears on multiple screens. It must be genuinely independent of feature-specific business logic.
 
-### When Storybook is not required
+Prefer composing existing shared components rather than creating large configurable components.
 
-Stories are generally unnecessary for:
+### Mandatory Storybook coverage
+
+Every new reusable visual component must have Storybook stories.
+
+Every materially modified reusable visual component must have its stories updated.
+
+Stories must:
+
+- Follow the installed Storybook version and repository conventions.
+- Use realistic Swedish sample content.
+- Demonstrate meaningful variants and states.
+- Include disabled, loading, error, selected, empty and long-text states where applicable.
+- Remain independent of live APIs and authentication.
+- Avoid production credentials and personal data.
+- Remain synchronized with component props and behavior.
+
+Do not generate unnecessary combinations of props.
+
+### Storybook exceptions
+
+Storybook is generally not required for:
 
 - API services.
 - Business logic.
 - Database models.
 - Nonvisual utilities.
 - Hooks without visual output.
-- Simple screen composition that only uses existing components.
+- Screen composition using unchanged existing components.
 
-### Storybook quality
+### Verification
 
-- Keep stories simple and readable.
-- Use realistic example content.
-- Avoid unnecessary backend dependencies.
-- Do not expose production credentials.
-- Keep stories synchronized with component APIs.
-- Follow the installed Storybook version's conventions.
+For relevant UI changes:
 
-Storybook complements automated testing. It does not replace unit, integration or accessibility tests.
+- Run available component tests.
+- Run TypeScript and lint checks.
+- Verify Storybook rendering when possible.
+- Check accessibility and responsive layouts.
+- Confirm existing application functionality remains intact.
+
+A successful Storybook build does not guarantee complete story coverage.
+
+Do not claim Storybook was verified unless the relevant check actually ran.
+
+### Optional OpenCode skill
+
+If `.opencode/skills/cena-ui/SKILL.md` exists, load and follow it for UI development tasks.
+
+The skill provides detailed implementation guidance but does not replace the mandatory rules in `AGENTS.md`.
+
+If the skill is unavailable, continue following the rules in this document.
+
+### UI Definition of Done
+
+A UI task is not complete until:
+
+- [ ] Existing components were inspected.
+- [ ] Appropriate shared components were reused.
+- [ ] No unnecessary duplicate components were introduced.
+- [ ] New reusable components have Storybook stories.
+- [ ] Materially changed reusable components have updated stories.
+- [ ] Feature-specific logic remains outside `packages/ui`.
+- [ ] Cena design tokens and accessibility conventions are followed.
+- [ ] Relevant checks have been run or explicitly reported as blocked.
 
 ## 8. Design System
 
@@ -571,6 +612,14 @@ For small, well-defined tasks, proceed directly.
 - Avoid unrelated refactoring.
 - Update Storybook when relevant.
 
+For tasks involving React Native UI:
+
+- Follow the mandatory component-first workflow in Section 7.
+- Inspect existing shared components before creating new ones.
+- Reuse `@cena/ui` wherever appropriate.
+- Add or update Storybook stories as part of the same implementation.
+- Do not postpone required Storybook work to a separate task unless explicitly approved.
+
 ### Step 5 — Verify
 
 Run appropriate:
@@ -627,6 +676,33 @@ Avoid concurrent modifications to:
 Prefer separate branches or worktrees for parallel tasks.
 
 Coordinate shared interfaces before implementing dependent changes.
+
+### Project-specific OpenCode skills
+
+Cena maintains project-specific skills in `.opencode/skills/`.
+
+When a task matches an available skill, load and follow the relevant skill before implementation.
+
+Available skills:
+
+| Skill | Use when |
+|---|---|
+| `cena-ui` | Creating or modifying React Native UI, shared components or Storybook |
+| `cena-backend` | Implementing NestJS APIs, Prisma models, migrations or authorization |
+| `cena-ai` | Implementing AI integrations, image recognition or recipe generation |
+| `cena-testing` | Planning, writing or verifying tests |
+| `cena-pr-review` | Reviewing changes or preparing a PR for merge |
+| `cena-feature` | Planning and implementing substantial multi-layer features |
+
+For multi-layer features, use `cena-feature` to coordinate the relevant specialized skills.
+
+Skills provide implementation workflows and checklists. They do not replace the mandatory rules in `AGENTS.md`.
+
+If a skill is unavailable or cannot be loaded, follow `AGENTS.md` and report the limitation.
+
+Do not claim a skill was used unless it was actually loaded.
+
+Do not create additional skills without a demonstrated need.
 
 ## 18. Git and Pull Requests
 
@@ -712,6 +788,11 @@ A task is complete when:
 - [ ] Documentation is updated where needed.
 - [ ] No known critical issues remain.
 - [ ] The final report accurately describes verification.
+- [ ] Existing shared UI components were inspected and reused where appropriate.
+- [ ] No unnecessary duplicate UI components were introduced.
+- [ ] New reusable visual components have Storybook stories.
+- [ ] Materially modified reusable visual components have updated stories.
+- [ ] Relevant Storybook verification was performed or explicitly reported as blocked.
 
 If verification is incomplete, explicitly report what remains unverified.
 
