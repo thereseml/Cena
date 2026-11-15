@@ -11,10 +11,16 @@ export function useHouseholdInventory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef(0);
+  const previousHouseholdId = useRef(householdId);
 
   const load = useCallback(async () => {
     const currentRequest = ++requestId.current;
+    if (previousHouseholdId.current !== householdId) {
+      previousHouseholdId.current = householdId;
+      setItems([]);
+    }
     if (!householdId) {
+      setItems([]);
       setError('Ditt hushåll kunde inte hittas. Försök logga in igen.');
       setLoading(false);
       return;

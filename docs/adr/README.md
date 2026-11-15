@@ -15,12 +15,13 @@ Architecture Decision Records (ADRs) capture **approved technical choices** inde
 | [0009](0009-receipt-import-ocr.md)            | Receipt-only scope and deterministic Swedish parsing; historical ML Kit engine     | Accepted scope; engine superseded by 0010 |
 | [0010](0010-expo-go-receipt-ocr.md)           | Bundled Tesseract.js 7 in an Expo Go WebView                                       | Accepted                                  |
 | [0011](0011-internal-recipe-library.md)       | Internal recipe library; explicit publication and deterministic inventory matching | Accepted; supersedes recipe AI in 0005    |
+| [0012](0012-household-invitations.md)         | Secure single-use household invitation links and explicit household creation       | Accepted                                  |
 
 ## Implementation gates not yet approved
 
 The decisions above establish technology boundaries, **not** an executable deployment or complete security design. Before implementing affected features, document the following as follow-up ADRs or approved technical specifications:
 
-1. **Authorization and household lifecycle:** membership validation for every request; invitation link/email acceptance, expiry, revocation, roles and household deletion; cross-household isolation tests.
+1. **Authorization and household lifecycle:** membership validation for every request; invitation and membership policy is specified in [ADR-0012](0012-household-invitations.md); household deletion and cross-household isolation remain security requirements.
 2. **Database access and transactions:** migration ownership, Prisma connection pooling compatible with the selected Supabase connection method, tenant-scoped queries, idempotency and concurrent inventory updates.
 3. **Auth integration:** token verification/JWKS, session refresh, signup/invite flow, server trust boundary and Row Level Security policy (defense in depth if used).
 4. **AI contracts:** validated recipe schemas, timeouts, rate limits, cost caps, safety/uncertainty UX and evaluation fixtures. Receipt import instead follows ADR-0009's scope and ADR-0010's Expo Go engine: local OCR, no raw image/text upload, deterministic parsing and explicit confirmation; physical-device and Android verification remain release gates.

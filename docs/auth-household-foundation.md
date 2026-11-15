@@ -1,6 +1,6 @@
 # Authentication and household foundation
 
-This guide covers the local private-beta setup for Supabase email OTP, the NestJS API and the initial household tables. Inventory, invitations, account deletion, RLS policies and production deployment are not part of this implementation.
+This guide covers the local private-beta setup for Supabase email OTP, the NestJS API and household membership. Invitation URL hosting and production deployment still require configuration.
 
 ## Supabase project setup
 
@@ -38,14 +38,15 @@ Do not use the service-role key in either app. The API uses only a PostgreSQL co
 
 `apps/api/.env` contains server-only values:
 
-| Variable                | Purpose                                                     |
-| ----------------------- | ----------------------------------------------------------- |
-| `DATABASE_URL`          | Runtime PostgreSQL connection (session pooler for Supabase) |
-| `DIRECT_DATABASE_URL`   | Direct PostgreSQL URL used by Prisma migrations             |
-| `SUPABASE_JWT_ISSUER`   | Expected JWT issuer                                         |
-| `SUPABASE_JWKS_URL`     | Trusted asymmetric public signing keys                      |
-| `SUPABASE_JWT_AUDIENCE` | Expected audience; normally `authenticated`                 |
-| `PORT`                  | API listen port                                             |
+| Variable                | Purpose                                                                                   |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| `DATABASE_URL`          | Runtime PostgreSQL connection (session pooler for Supabase)                               |
+| `DIRECT_DATABASE_URL`   | Direct PostgreSQL URL used by Prisma migrations                                           |
+| `SUPABASE_JWT_ISSUER`   | Expected JWT issuer                                                                       |
+| `SUPABASE_JWKS_URL`     | Trusted asymmetric public signing keys                                                    |
+| `SUPABASE_JWT_AUDIENCE` | Expected audience; normally `authenticated`                                               |
+| `INVITATION_BASE_URL`   | Optional HTTPS invitation URL base; see [household invitations](household-invitations.md) |
+| `PORT`                  | API listen port                                                                           |
 
 Never prefix server secrets with `EXPO_PUBLIC_`. Real environment files are ignored by Git.
 
@@ -64,7 +65,7 @@ Never prefix server secrets with `EXPO_PUBLIC_`. Real environment files are igno
 
 4. Start the API with `pnpm --filter @cena/api dev`.
 5. Start Expo with `pnpm --filter @cena/mobile start` and open the app on a simulator or device. For a physical device, set `EXPO_PUBLIC_API_URL` to the development machine's LAN address rather than `localhost`.
-6. Enter an email address, retrieve the six-digit code from the configured email, verify it, and confirm that Cena opens the existing four-tab app. Sign out from **Profil & inställningar**, then repeat to verify the same household is returned.
+6. Enter an email address, retrieve the six-digit code from the configured email and verify it. A new user without an invitation explicitly creates a household before opening the app. Existing members continue to their household. Sign out from **Profil & inställningar**, then repeat to verify the same household is returned.
 
 The API's health endpoint is `GET /health`. Authenticated API endpoints require `Authorization: Bearer <Supabase access token>`.
 
@@ -74,9 +75,9 @@ The API's health endpoint is `GET /health`. Authenticated API endpoints require 
 - Supabase Auth owns the identity, access token, refresh token and session lifecycle. The app starts/stops token auto-refresh with foreground/background transitions and clears the session on sign-out.
 - Before rendering a protected route, the app restores the session and calls `POST /api/v1/me/bootstrap`. Network/bootstrap failure blocks protected screens and provides retry; it does not discard a valid session.
 - NestJS verifies JWT signatures with the configured JWKS and checks issuer, audience, expiry and the Supabase `authenticated` role. Privileged service-role tokens are rejected. The verified `sub` and email are the only identity inputs used by application services.
-- Prisma stores an application `User`, `Household` and `HouseholdMember`. A transaction uses a conditional `provisioningCompleted` update as a single-winner gate. The household and OWNER membership are created atomically; retries return the existing profile. The marker stays complete if memberships are later removed, so bootstrap will not silently recreate a household.
+- Prisma stores an application `User`, `Household` and `HouseholdMember`. A transaction uses a conditional `provisioningCompleted` update as a single-winner gate. Bootstrap creates the application identity only. A user with no membership explicitly creates a household as `OWNER` or accepts an invitation as `MEMBER`. The marker stays complete if memberships are later removed, so bootstrap will not silently recreate a household.
 - Household lookups join against the authenticated user's membership. A nonmember receives the same not-found response as an unknown household. Client-supplied ownership or role values are not accepted.
-- Prisma connects to PostgreSQL with server credentials. RLS is enabled on the three `public` application tables without client policies, so direct Data API access is denied. The API uses the database owner connection and applies membership authorization in NestJS; no mobile client connects directly to these tables.
+- Prisma connects to PostgreSQL with server credentials. RLS is enabled on the `public` application tables, including invitations, without client policies, so direct Data API access is denied. The API uses the database owner connection and applies membership authorization in NestJS; no mobile client connects directly to these tables.
 
 ## API
 
@@ -87,11 +88,13 @@ The API's health endpoint is `GET /health`. Authenticated API endpoints require 
 | `GET`  | `/api/v1/households`     | Membership-scoped household summaries                               |
 | `GET`  | `/api/v1/households/:id` | Household details only for a member                                 |
 
-`User.provisioningCompleted` records that initial provisioning was attempted successfully, including for an existing member. Database uniqueness, foreign keys, the membership unique key and the transaction protect consistency. The data model permits a user to belong to multiple households and supports future `MEMBER` roles, but invitations and membership management are intentionally absent.
+`User.provisioningCompleted` records that identity bootstrap completed. Membership has a unique user constraint for the one-household beta rule. See [household invitation lifecycle, API and link setup](household-invitations.md).
+
+The invitation and member endpoints, request/response behavior, and permissions are listed in the [household invitation guide](household-invitations.md#api).
 
 ## Limitations
 
 - Numeric email delivery requires the Supabase dashboard template, suitable SMTP for test recipients, and Auth settings above. No live Supabase project was configured for this change, so delivery, deliverability and end-to-end verification have not been tested.
 - JWT verification requires an asymmetric Supabase signing key and a reachable JWKS endpoint. Legacy symmetric signing keys require a separately reviewed verifier change.
 - Migrations are local/version-controlled; hosted migration deployment, backups and production operations remain deferred.
-- There are no invitations, household switching/management, RLS policies, account deletion, or rate limiting at the API. Recipe and shopping features remain mock data; the household inventory implementation is documented in [inventory.md](inventory.md).
+- The temporary domain hostname has not yet been supplied, so Universal Links/Android App Links and their association files are not configured or verified. Household invitations have an owner creation limit; there is no general API request-throttling layer. Account deletion and hosted migration deployment remain outside scope.

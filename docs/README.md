@@ -4,24 +4,25 @@ Start here when working with Codex, GPT or OpenCode. Read only the documents rel
 
 **Canonical original:** [blueprint.md](blueprint.md) is preserved verbatim. The focused documents below are reorganized excerpts of that source, not independent product decisions. For general requirements use the original blueprint; for approved private-beta scope, [mvp-scope.md](mvp-scope.md) supersedes conflicting historical P0/P1 priorities. Flag other discrepancies. Section numbers deliberately match the original.
 
-| Task                                                                 | Read                                                                                                         |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Manual Codex/OpenCode development process**                        | [development-workflow.md](development-workflow.md)                                                           |
-| **Architecture decisions and open implementation gates**             | [adr/README.md](adr/README.md) (ADRs 0001–0009; includes superseded decisions)                               |
-| Authentication, local Supabase setup and household provisioning      | [auth-household-foundation.md](auth-household-foundation.md)                                                 |
-| Household inventory model, API, expiry and local workflow            | [inventory.md](inventory.md)                                                                                 |
-| **On-device receipt OCR, local builds and manual verification**      | [receipt-import.md](receipt-import.md)                                                                       |
-| **Internal recipe library, seed/publication and inventory matching** | [recipes.md](recipes.md), [recipe review](recipe-review.md), [ADR-0011](adr/0011-internal-recipe-library.md) |
+| Task                                                                   | Read                                                                                                         |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Manual Codex/OpenCode development process**                          | [development-workflow.md](development-workflow.md)                                                           |
+| **Architecture decisions and open implementation gates**               | [adr/README.md](adr/README.md) (accepted ADRs and open gates)                                                |
+| Authentication, local Supabase setup and household provisioning        | [auth-household-foundation.md](auth-household-foundation.md)                                                 |
+| Household inventory model, API, expiry and local workflow              | [inventory.md](inventory.md)                                                                                 |
+| **On-device receipt OCR, local builds and manual verification**        | [receipt-import.md](receipt-import.md)                                                                       |
+| **Internal recipe library, seed/publication and inventory matching**   | [recipes.md](recipes.md), [recipe review](recipe-review.md), [ADR-0011](adr/0011-internal-recipe-library.md) |
 | **Household shopping list, recipe integration and inventory transfer** | [shopping.md](shopping.md)                                                                                   |
-| **Approved private-beta MVP scope and acceptance criteria**          | [mvp-scope.md](mvp-scope.md) (new product-owner decisions)                                                   |
-| Product vision, decisions, scope and risks                           | [product.md](product.md) (sections 1, 2, 3, 4, 19, 26, 27)                                                   |
-| Navigation, journeys, screen requirements and accessibility          | [experience.md](experience.md) (sections 5, 7, 17)                                                           |
-| Warm Minimalism tokens and component rules                           | [design-system.md](design-system.md) (sections 6)                                                            |
-| Technical architecture, repository layout and reliability            | [architecture.md](architecture.md) (sections 8, 18)                                                          |
-| Domain entities, data rules and API contracts                        | [data-and-api.md](data-and-api.md) (sections 9, 10)                                                          |
-| AI workflows, validation, privacy and security                       | [ai-and-security.md](ai-and-security.md) (sections 11, 12)                                                   |
-| Subscriptions, metrics and validation                                | [business-and-metrics.md](business-and-metrics.md) (sections 13, 14, 23)                                     |
-| Roadmap, testing, release criteria and open decisions                | [delivery.md](delivery.md) (sections 15, 16, 20, 21, 22, 24, 25)                                             |
+| **Household invitation links, permissions and setup**                  | [household-invitations.md](household-invitations.md), [ADR-0012](adr/0012-household-invitations.md)          |
+| **Approved private-beta MVP scope and acceptance criteria**            | [mvp-scope.md](mvp-scope.md) (new product-owner decisions)                                                   |
+| Product vision, decisions, scope and risks                             | [product.md](product.md) (sections 1, 2, 3, 4, 19, 26, 27)                                                   |
+| Navigation, journeys, screen requirements and accessibility            | [experience.md](experience.md) (sections 5, 7, 17)                                                           |
+| Warm Minimalism tokens and component rules                             | [design-system.md](design-system.md) (sections 6)                                                            |
+| Technical architecture, repository layout and reliability              | [architecture.md](architecture.md) (sections 8, 18)                                                          |
+| Domain entities, data rules and API contracts                          | [data-and-api.md](data-and-api.md) (sections 9, 10)                                                          |
+| AI workflows, validation, privacy and security                         | [ai-and-security.md](ai-and-security.md) (sections 11, 12)                                                   |
+| Subscriptions, metrics and validation                                  | [business-and-metrics.md](business-and-metrics.md) (sections 13, 14, 23)                                     |
+| Roadmap, testing, release criteria and open decisions                  | [delivery.md](delivery.md) (sections 15, 16, 20, 21, 22, 24, 25)                                             |
 
 ## Agent reading order
 
