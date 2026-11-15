@@ -74,6 +74,31 @@ export interface CurrentUser {
   households: HouseholdSummary[];
 }
 
+export interface HouseholdMemberSummary {
+  id: string;
+  displayName: string;
+  role: 'OWNER' | 'MEMBER';
+  isCurrentUser: boolean;
+}
+
+export interface HouseholdInvitationSummary {
+  id: string;
+  createdAt: string;
+  expiresAt: string;
+}
+
+export interface HouseholdInvitationPreview {
+  householdName: string;
+  status:
+    'VALID' | 'EXPIRED' | 'REVOKED' | 'ACCEPTED' | 'INVALID' | 'ALREADY_MEMBER' | 'OTHER_HOUSEHOLD';
+}
+
+export interface CreatedHouseholdInvitation {
+  id: string;
+  url: string;
+  expiresAt: string;
+}
+
 export const INVENTORY_UNITS = ['st', 'g', 'kg', 'ml', 'l'] as const;
 export type InventoryUnit = (typeof INVENTORY_UNITS)[number];
 

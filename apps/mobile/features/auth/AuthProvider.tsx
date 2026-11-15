@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
-import { AppState } from 'react-native';
+import { AppState, Linking } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import {
   createContext,
   useContext,
@@ -18,14 +19,20 @@ interface AuthContextValue {
   profile: CurrentUser | null;
   error: string | null;
   hasSession: boolean;
+  invitationReady: boolean;
+  invitationToken: string | null;
   requestCode(email: string): Promise<void>;
   verifyCode(email: string, code: string): Promise<void>;
   resendCode(email: string): Promise<void>;
   retryBootstrap(): Promise<void>;
+  setProfileFromServer(profile: CurrentUser): void;
+  clearInvitation(): Promise<void>;
   signOut(): Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const INVITATION_STORAGE_KEY = 'pending-household-invitation';
+const INVITATION_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [startupError] = useState<string | null>(() => {
@@ -40,6 +47,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [profile, setProfile] = useState<CurrentUser | null>(null);
   const [error, setError] = useState<string | null>(startupError);
   const [session, setSession] = useState<Session | null>(null);
+  const [invitationToken, setInvitationToken] = useState<string | null>(null);
+  const [invitationReady, setInvitationReady] = useState(false);
   const profileRequestId = useRef(0);
 
   async function loadProfile(nextSession: Session): Promise<void> {
@@ -81,6 +90,22 @@ export function AuthProvider({ children }: PropsWithChildren) {
     let mounted = true;
     const client = getSupabaseClient();
 
+    async function storeInvitationUrl(url: string): Promise<void> {
+      try {
+        const parsedUrl = new URL(url);
+        const token = parsedUrl.searchParams.get('token');
+        if (!token || !INVITATION_TOKEN_PATTERN.test(token)) return;
+        await SecureStore.setItemAsync(INVITATION_STORAGE_KEY, token).catch(() => undefined);
+        if (mounted) setInvitationToken(token);
+      } catch {
+        // Ignore unrelated or malformed links without logging their contents.
+      }
+    }
+
+    const linkListener = Linking.addEventListener('url', ({ url }) => {
+      void storeInvitationUrl(url);
+    });
+
     const { data: listener } = client.auth.onAuthStateChange((event, nextSession) => {
       if (!mounted || event === 'INITIAL_SESSION') return;
       if (event === 'TOKEN_REFRESHED' && nextSession) {
@@ -102,18 +127,29 @@ export function AuthProvider({ children }: PropsWithChildren) {
     });
     if (AppState.currentState === 'active') void client.auth.startAutoRefresh();
 
-    void client.auth.getSession().then(({ data, error: sessionError }) => {
+    void (async () => {
+      const [savedToken, initialUrl] = await Promise.all([
+        SecureStore.getItemAsync(INVITATION_STORAGE_KEY).catch(() => null),
+        Linking.getInitialURL().catch(() => null),
+      ]);
+      if (!mounted) return;
+      const token = savedToken && INVITATION_TOKEN_PATTERN.test(savedToken) ? savedToken : null;
+      if (token) setInvitationToken(token);
+      if (initialUrl) await storeInvitationUrl(initialUrl);
+      setInvitationReady(true);
+      const { data, error: sessionError } = await client.auth.getSession();
       if (!mounted) return;
       if (sessionError) {
         setError('Din inloggning kunde inte återställas. Försök logga in igen.');
         setStatus('signedOut');
       } else if (data.session) void loadProfile(data.session);
       else setStatus('signedOut');
-    });
+    })();
 
     return () => {
       mounted = false;
       listener.subscription.unsubscribe();
+      linkListener.remove();
       appStateListener.remove();
       void client.auth.stopAutoRefresh();
     };
@@ -149,6 +185,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (session) await loadProfile(session);
   }
 
+  function setProfileFromServer(currentUser: CurrentUser): void {
+    setProfile(currentUser);
+    setStatus('authenticated');
+  }
+
+  async function clearInvitation(): Promise<void> {
+    setInvitationToken(null);
+    await SecureStore.deleteItemAsync(INVITATION_STORAGE_KEY).catch(() => undefined);
+  }
+
   async function signOut(): Promise<void> {
     const { error: signOutError } = await getSupabaseClient().auth.signOut();
     if (signOutError) throw new Error('Du kunde inte loggas ut. Försök igen.');
@@ -165,10 +211,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
         profile,
         error,
         hasSession: session !== null,
+        invitationReady,
+        invitationToken,
         requestCode,
         verifyCode,
         resendCode,
         retryBootstrap,
+        setProfileFromServer,
+        clearInvitation,
         signOut,
       }}
     >

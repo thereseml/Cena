@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { HouseholdRole } from '@prisma/client';
 import type { CurrentUser } from '@cena/contracts';
 import { PrismaService } from '../prisma/prisma.module';
@@ -18,25 +23,10 @@ export class HouseholdsService {
 
       // The conditional update is the concurrency gate: only one request can
       // perform initial household provisioning for this user.
-      const claimed = await transaction.user.updateMany({
+      await transaction.user.updateMany({
         where: { id: user.id, provisioningCompleted: false },
         data: { provisioningCompleted: true },
       });
-
-      if (claimed.count === 1) {
-        const membershipCount = await transaction.householdMember.count({
-          where: { userId: user.id },
-        });
-        if (membershipCount === 0) {
-          await transaction.household.create({
-            data: {
-              name: 'Mitt hushåll',
-              members: { create: { userId: user.id, role: HouseholdRole.OWNER } },
-            },
-          });
-        }
-      }
-
     });
 
     return this.getForUser(identity.id);
@@ -77,6 +67,63 @@ export class HouseholdsService {
       name: household.name,
       role,
     }));
+  }
+
+  async createHousehold(supabaseAuthId: string, name: string) {
+    const userId = await this.getApplicationUserId(supabaseAuthId);
+    const cleanName = name.trim();
+    if (cleanName.length < 1 || cleanName.length > 80) {
+      throw new BadRequestException('Ange ett hushållsnamn på högst 80 tecken.');
+    }
+
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.$queryRaw`SELECT id FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
+      const existing = await transaction.householdMember.findFirst({ where: { userId } });
+      if (existing) throw new ConflictException('Du tillhör redan ett hushåll.');
+      await transaction.household.create({
+        data: { name: cleanName, members: { create: { userId, role: HouseholdRole.OWNER } } },
+      });
+    });
+
+    return this.getForUser(supabaseAuthId);
+  }
+
+  async listMembers(supabaseAuthId: string, householdId: string) {
+    const userId = await this.getApplicationUserId(supabaseAuthId);
+    return this.prisma.$transaction(async (transaction) => {
+      await transaction.$queryRaw`SELECT id FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
+      const currentMembership = await transaction.householdMember.findUnique({
+        where: { householdId_userId: { householdId, userId } },
+      });
+      if (!currentMembership) throw new NotFoundException('Hushållet kunde inte hittas.');
+      const memberships = await transaction.householdMember.findMany({
+        where: { householdId },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true, userId: true, role: true },
+      });
+      return memberships.map((membership, index) => ({
+        id: membership.id,
+        displayName: membership.userId === userId ? 'Du' : `Medlem ${index + 1}`,
+        role: membership.role,
+        isCurrentUser: membership.userId === userId,
+      }));
+    });
+  }
+
+  async leaveHousehold(supabaseAuthId: string, householdId: string): Promise<CurrentUser> {
+    const userId = await this.getApplicationUserId(supabaseAuthId);
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.$queryRaw`SELECT id FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
+      const membership = await transaction.householdMember.findUnique({
+        where: { householdId_userId: { householdId, userId } },
+      });
+      if (!membership) throw new NotFoundException('Hushållet kunde inte hittas.');
+      if (membership.role === HouseholdRole.OWNER) {
+        throw new ConflictException('Ägaren kan inte lämna hushållet i den här versionen.');
+      }
+      await transaction.householdMember.delete({ where: { id: membership.id } });
+    });
+    return this.getForUser(supabaseAuthId);
   }
 
   async getHouseholdForUser(supabaseAuthId: string, householdId: string) {

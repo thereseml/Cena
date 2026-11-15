@@ -4,18 +4,31 @@ import { Button, colors, spacing, Text } from '@cena/ui';
 import { useAuth } from './AuthProvider';
 
 export function AuthRouter() {
-  const { status, error, hasSession, retryBootstrap, signOut } = useAuth();
+  const {
+    status,
+    error,
+    hasSession,
+    invitationReady,
+    invitationToken,
+    profile,
+    retryBootstrap,
+    signOut,
+  } = useAuth();
   const segments = useSegments();
   const inAuth = segments[0] === '(auth)';
 
-  if (status === 'initializing' || status === 'loadingProfile') {
+  if (
+    status === 'initializing' ||
+    status === 'loadingProfile' ||
+    (!invitationReady && status !== 'error')
+  ) {
     return (
       <View style={styles.center}>
         <Text variant="h1" style={styles.brand}>
           cena.
         </Text>
         <ActivityIndicator color={colors.brand.primary} />
-        <Text>{status === 'initializing' ? 'Öppnar ditt kök…' : 'Hämtar ditt hushåll…'}</Text>
+        <Text>{status === 'loadingProfile' ? 'Hämtar ditt hushåll…' : 'Öppnar Cena…'}</Text>
       </View>
     );
   }
@@ -41,6 +54,12 @@ export function AuthRouter() {
     );
   }
 
+  if (status === 'authenticated' && invitationToken) {
+    return <Redirect href={{ pathname: '/invite', params: { token: invitationToken } }} />;
+  }
+  if (status === 'authenticated' && !profile?.households.length) {
+    return <Redirect href="/household-setup" />;
+  }
   if (status === 'authenticated' && inAuth) return <Redirect href="/(tabs)" />;
   if (status === 'signedOut' && !inAuth) return <Redirect href="/(auth)" />;
   return (
@@ -53,6 +72,9 @@ export function AuthRouter() {
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="profile" />
+      <Stack.Screen name="household" />
+      <Stack.Screen name="household-setup" />
+      <Stack.Screen name="invite" />
       <Stack.Screen name="add-product" />
       <Stack.Screen name="recipe/[id]" />
     </Stack>

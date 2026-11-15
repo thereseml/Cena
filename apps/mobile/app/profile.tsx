@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
-import { ArrowLeft, CircleUserRound, House, Info } from 'lucide-react-native';
+import { ArrowLeft, ChevronRight, CircleUserRound, House, Info } from 'lucide-react-native';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, colors, spacing, Text } from '@cena/ui';
+import { ActionRow, Button, colors, spacing, Text } from '@cena/ui';
 import { useAuth } from '../features/auth/AuthProvider';
 
 export default function ProfileScreen() {
@@ -28,13 +28,13 @@ export default function ProfileScreen() {
         <Text variant="caption" style={styles.sectionLabel}>
           HUSHÅLL
         </Text>
-        <View style={styles.settingRow}>
-          <House size={20} color={colors.brand.primary} strokeWidth={1.8} />
-          <View style={styles.rowCopy}>
-            <Text variant="label">Ditt hushåll</Text>
-            <Text variant="bodySmall">{household?.name ?? 'Du tillhör inget hushåll ännu.'}</Text>
-          </View>
-        </View>
+        <ActionRow
+          title="Mitt hushåll"
+          description={household?.name ?? 'Skapa eller gå med i ett hushåll'}
+          leadingIcon={<House size={20} color={colors.brand.primary} strokeWidth={1.8} />}
+          trailingIcon={<ChevronRight size={18} color={colors.text.muted} />}
+          onPress={() => router.push(household ? '/household' : '/household-setup')}
+        />
 
         <Text variant="caption" style={styles.sectionLabel}>
           KONTO
