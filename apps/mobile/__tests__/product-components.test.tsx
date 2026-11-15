@@ -1,6 +1,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { InventoryItemRow } from '../components/InventoryItemRow';
 import { ShoppingListItem } from '../components/ShoppingListItem';
+import shoppingItemMeta, * as shoppingItemStories from '../components/ShoppingListItem.stories';
 import type { InventoryItem } from '@cena/contracts';
 
 const milk: InventoryItem = {
@@ -81,5 +82,39 @@ describe('product list components', () => {
     expect(checkbox.props.accessibilityState.checked).toBe(false);
     fireEvent.press(checkbox);
     expect(onToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows shopping quantity and prevents toggling a busy row', async () => {
+    const onToggle = jest.fn();
+    const { getByRole, getByText } = await render(
+      <ShoppingListItem
+        item="Pasta"
+        checked={false}
+        quantity="300 g"
+        onToggle={onToggle}
+        disabled
+      />,
+    );
+    const checkbox = getByRole('checkbox', { name: 'Pasta' });
+
+    expect(getByText('300 g')).toBeTruthy();
+    expect(checkbox.props.accessibilityState.disabled).toBe(true);
+    fireEvent.press(checkbox);
+    expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  it('renders representative shopping item stories', async () => {
+    for (const story of [
+      shoppingItemStories.Unchecked,
+      shoppingItemStories.Checked,
+      shoppingItemStories.WithQuantity,
+      shoppingItemStories.MissingQuantity,
+      shoppingItemStories.Disabled,
+    ]) {
+      const props = { ...shoppingItemMeta.args, ...story.args };
+      const screen = await render(<ShoppingListItem {...props} />);
+      expect(screen.getByRole('checkbox')).toBeTruthy();
+      await screen.unmount();
+    }
   });
 });

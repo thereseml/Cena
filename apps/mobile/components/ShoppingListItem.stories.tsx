@@ -27,3 +27,11 @@ export const Unchecked: Story = {};
 export const Checked: Story = { args: { checked: true } };
 
 export const Interactive: Story = { render: () => <InteractiveShoppingListItem /> };
+
+export const WithQuantity: Story = { args: { quantity: '500 g' } };
+
+export const MissingQuantity: Story = {
+  args: { item: 'En lång ingrediens som behöver få plats på flera rader', quantity: null },
+};
+
+export const Disabled: Story = { args: { disabled: true } };

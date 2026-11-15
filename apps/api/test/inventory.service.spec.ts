@@ -152,6 +152,31 @@ describe('InventoryService', () => {
     expect(database.transaction.inventoryEvent.create).toHaveBeenCalledTimes(2);
   });
 
+  it('creates shopping transfers with a PURCHASED inventory event inside the caller transaction', async () => {
+    const database = createDatabase();
+    const service = new InventoryService(database.prisma as never);
+
+    await service.createPurchasedWithinTransaction(
+      database.transaction as never,
+      householdId,
+      {
+        name: 'Mjölk',
+        quantity: 1,
+        unit: 'l',
+        storageLocation: 'FRIDGE',
+        expiryDate: null,
+        expiryType: null,
+        expirySource: null,
+      },
+      'shopping:shopping-item-id',
+    );
+
+    expect(database.transaction.inventoryEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ eventType: InventoryEventType.PURCHASED, quantityDelta: 1 }),
+    });
+    expect(database.prisma.$transaction).not.toHaveBeenCalled();
+  });
+
   it('replays a complete bulk create without creating duplicate inventory events', async () => {
     const database = createDatabase();
     database.prisma.inventoryItem.findMany.mockImplementation(async ({ where }) => {

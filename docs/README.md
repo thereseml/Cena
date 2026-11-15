@@ -12,6 +12,7 @@ Start here when working with Codex, GPT or OpenCode. Read only the documents rel
 | Household inventory model, API, expiry and local workflow            | [inventory.md](inventory.md)                                                                                 |
 | **On-device receipt OCR, local builds and manual verification**      | [receipt-import.md](receipt-import.md)                                                                       |
 | **Internal recipe library, seed/publication and inventory matching** | [recipes.md](recipes.md), [recipe review](recipe-review.md), [ADR-0011](adr/0011-internal-recipe-library.md) |
+| **Household shopping list, recipe integration and inventory transfer** | [shopping.md](shopping.md)                                                                                   |
 | **Approved private-beta MVP scope and acceptance criteria**          | [mvp-scope.md](mvp-scope.md) (new product-owner decisions)                                                   |
 | Product vision, decisions, scope and risks                           | [product.md](product.md) (sections 1, 2, 3, 4, 19, 26, 27)                                                   |
 | Navigation, journeys, screen requirements and accessibility          | [experience.md](experience.md) (sections 5, 7, 17)                                                           |

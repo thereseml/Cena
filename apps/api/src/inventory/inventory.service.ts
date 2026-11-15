@@ -139,6 +139,7 @@ export class InventoryService {
     householdId: string,
     input: ReturnType<typeof parseInventoryInput>,
     createRequestId: string,
+    eventType: InventoryEventType = InventoryEventType.ADDED,
   ): Promise<InventoryItemContract> {
     const normalizedName = normalizeName(input.name);
     const ingredient = await transaction.ingredient.upsert({
@@ -175,12 +176,27 @@ export class InventoryService {
         householdId,
         inventoryItemId: item.id,
         productBatchId: item.batches[0].id,
-        eventType: InventoryEventType.ADDED,
+        eventType,
         quantityDelta: input.quantity,
         unit: unitToDatabase(input.unit),
       },
     });
     return this.toContract(item);
+  }
+
+  createPurchasedWithinTransaction(
+    transaction: Prisma.TransactionClient,
+    householdId: string,
+    input: ReturnType<typeof parseInventoryInput>,
+    createRequestId: string,
+  ): Promise<InventoryItemContract> {
+    return this.createInventoryItem(
+      transaction,
+      householdId,
+      input,
+      createRequestId,
+      InventoryEventType.PURCHASED,
+    );
   }
 
   private findBulkReplay(householdId: string, batchRequestId: string) {

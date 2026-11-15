@@ -123,3 +123,39 @@ export interface SaveInventoryItemsInput {
 export interface UpdateInventoryItemInput extends SaveInventoryItemInput {
   expectedVersion: number;
 }
+
+export interface ShoppingListItem {
+  id: string;
+  name: string;
+  quantity: number | null;
+  unit: InventoryUnit | null;
+  isPurchased: boolean;
+  recipeId: string | null;
+  recipeTitle: string | null;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ShoppingList {
+  items: ShoppingListItem[];
+}
+
+export interface SaveShoppingListItemInput {
+  name: string;
+  quantity: number | null;
+  unit: InventoryUnit | null;
+}
+
+export interface UpdateShoppingListItemInput extends SaveShoppingListItemInput {
+  expectedVersion: number;
+}
+
+export interface ShoppingListRecipeItemInput extends SaveShoppingListItemInput {
+  recipeIngredientId: string;
+}
+
+export interface ShoppingListInventoryItemInput extends SaveInventoryItemInput {
+  shoppingListItemId: string;
+  expectedVersion: number;
+}
