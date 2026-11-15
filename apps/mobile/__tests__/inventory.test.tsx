@@ -156,7 +156,7 @@ describe('KitchenScreen', () => {
 });
 
 describe('HomeScreen inventory summary', () => {
-  it('shows counts from persisted inventory rather than mock product statistics', async () => {
+  it('shows persisted inventory counts and links to recipes without mock availability', async () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const expiryDate = [
@@ -184,11 +184,14 @@ describe('HomeScreen inventory summary', () => {
       retry: jest.fn(),
     });
 
-    const { getByText } = await render(<HomeScreen />);
+    const { getByText, queryByLabelText } = await render(<HomeScreen />);
 
     expect(getByText('varor hemma')).toBeTruthy();
     expect(getByText('att använda snart')).toBeTruthy();
     expect(getByText('Från ditt sparade kök.')).toBeTruthy();
+    expect(queryByLabelText(/^Visa receptet /)).toBeNull();
+    await fireEvent.press(getByText('Vad ska vi laga idag?'));
+    expect(router.push).toHaveBeenCalledWith('/(tabs)/recipes');
   });
 });
 

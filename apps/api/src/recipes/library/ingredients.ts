@@ -1,0 +1,98 @@
+import { normalizeIngredientName } from '../recipe-normalization';
+
+// Exact, reviewed spellings only. Never strip brands, sizes or infer quantities.
+export const INGREDIENT_CATALOG = {
+  potato: ['Potatis', 'potatis fast'],
+  carrot: ['Morot', 'morötter'],
+  onion: ['Gul lök', 'gul lök nät'],
+  redOnion: ['Rödlök'],
+  garlic: ['Vitlöksklyfta', 'vitlöksklyftor'],
+  leek: ['Purjolök', 'purjo'],
+  broccoli: ['Broccoli'],
+  cauliflower: ['Blomkål'],
+  cabbage: ['Vitkål'],
+  zucchini: ['Zucchini', 'squash'],
+  pepper: ['Paprika'],
+  tomato: ['Tomat', 'tomater'],
+  cucumber: ['Gurka'],
+  spinach: ['Spenat', 'bladspenat'],
+  peas: ['Gröna ärter', 'gröna ärtor', 'ärter frysta'],
+  mushroom: ['Champinjon', 'champinjoner'],
+  lemon: ['Citron'],
+  apple: ['Äpple', 'äpplen'],
+  banana: ['Banan', 'bananer'],
+  blueberries: ['Blåbär'],
+  chicken: ['Kycklingfilé', 'kyckl filé', 'kyck filé', 'kycklingfile'],
+  beef: ['Nötfärs', 'nötfärs 12%'],
+  pork: ['Fläskytterfilé'],
+  sausage: ['Falukorv', 'falu korv'],
+  salmon: ['Laxfilé', 'laxfile'],
+  cod: ['Torskfilé', 'torskfile'],
+  tuna: ['Tonfisk i vatten'],
+  egg: ['Ägg', 'ägg frigående'],
+  milk: [
+    'Mjölk',
+    'mellanmjölk',
+    'mellan mjölk',
+    'mellanmjölk 1,5%',
+    'mellan mjölk 1,5%',
+    'mellanmj 1,5%',
+  ],
+  cream: ['Vispgrädde', 'vispgr 40%'],
+  creme: ['Crème fraiche', 'creme fraiche', 'cr fraiche', 'crème fraiche 34%'],
+  yogurt: ['Naturell yoghurt', 'yoghurt naturell', 'yogh nat'],
+  cheese: ['Hårdost', 'riven hårdost'],
+  feta: ['Fetaost'],
+  halloumi: ['Halloumi'],
+  cottage: ['Keso', 'cottage cheese'],
+  butter: ['Smör'],
+  oil: ['Rapsolja'],
+  flour: ['Vetemjöl'],
+  oats: ['Havregryn'],
+  rice: ['Ris'],
+  pasta: ['Pasta'],
+  lasagnePlates: ['Lasagneplattor', 'lasagneplattor torra'],
+  couscous: ['Couscous'],
+  noodles: ['Äggnudlar'],
+  bread: ['Brödskiva, fullkorn', 'fullkornsbröd skivor', 'skiva fullkornsbröd'],
+  tortilla: ['Tortillabröd'],
+  lentils: ['Röda linser', 'röda linser torra'],
+  chickpeas: ['Kikärter, kokta', 'kokta kikärter', 'kokta kikärtor', 'kikärter kokta'],
+  beans: ['Vita bönor, kokta', 'kokta vita bönor', 'vita bönor kokta'],
+  kidney: ['Kidneybönor, kokta', 'kokta kidneybönor', 'kidneybönor kokta'],
+  crushedTomato: ['Krossade tomater', 'kross tomat', 'kross tom', 'tomat kross'],
+  tomatoPaste: ['Tomatpuré', 'tomatpure'],
+  coconut: ['Kokosmjölk', 'kokosmj'],
+  corn: ['Majs'],
+  water: ['Vatten'],
+  salt: ['Salt'],
+  blackPepper: ['Svartpeppar'],
+  paprika: ['Paprikapulver'],
+  cumin: ['Spiskummin'],
+  curry: ['Curry'],
+  cinnamon: ['Kanel'],
+  oregano: ['Oregano, torkad', 'torkad oregano'],
+  thyme: ['Timjan, torkad', 'torkad timjan'],
+  dill: ['Dill'],
+  parsley: ['Persilja'],
+  mustard: ['Dijonsenap'],
+  soy: ['Sojasås'],
+  vinegar: ['Äppelcidervinäger'],
+  honey: ['Honung'],
+  bakingPowder: ['Bakpulver'],
+} as const;
+
+export type IngredientKey = keyof typeof INGREDIENT_CATALOG;
+
+export function canonicalIngredient(key: IngredientKey): {
+  name: string;
+  normalizedName: string;
+  aliases: string[];
+} {
+  const [name, ...aliases] = INGREDIENT_CATALOG[key];
+  return {
+    name,
+    normalizedName: normalizeIngredientName(name),
+    aliases: aliases.map(normalizeIngredientName),
+  };
+}

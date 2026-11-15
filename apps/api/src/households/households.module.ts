@@ -7,5 +7,6 @@ import { HouseholdsService } from './households.service';
   imports: [AuthModule],
   controllers: [HouseholdsController],
   providers: [HouseholdsService],
+  exports: [HouseholdsService],
 })
 export class HouseholdsModule {}

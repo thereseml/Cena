@@ -17,7 +17,7 @@ This document records **new product-owner decisions** made after blueprint v2.0.
 | --- | --------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
 | D01 | Release         | Private beta with 5–20 testers                                                                                     | Beta access and feedback, not public monetized launch                      |
 | D02 | Inventory entry | Manual entry **and** on-device receipt OCR import                                                                  | Both P0; replaces general product-image recognition in PR12                |
-| D03 | Recipes         | Personalized, AI-generated recipes                                                                                 | P0; respect inventory and preferences                                      |
+| D03 | Recipes         | Internal shared recipe library with deterministic household inventory recommendations                              | P0; replaces runtime AI and external recipe search; see ADR-0011           |
 | D04 | Planning        | Weekly meal planning is P1                                                                                         | Not required for beta                                                      |
 | D05 | Household       | Multiple users share a household                                                                                   | Household sharing promoted from P1 to P0                                   |
 | D06 | Receipt input   | Extract multiple product rows from a receipt photo or screenshot using local OCR and deterministic Swedish parsing | Review/edit/select before saving; no cloud LLM or paid recognition service |
@@ -30,6 +30,16 @@ This document records **new product-owner decisions** made after blueprint v2.0.
 **Technical revision, 2026-11-14:** The product owner explicitly requires Expo Go for receipt import. [ADR-0010](adr/0010-expo-go-receipt-ocr.md) replaces ADR-0009's native ML Kit/custom-build choice with bundled Tesseract.js 7 in a local WebView. D02, D06 and J03 retain the same approved receipt-only scope and confirmation/security boundaries. OCR needs no inference network after the bundled assets are loaded; this is not a promise of a fully offline Expo Go cold start or offline inventory saving.
 
 ## P0 — required for private beta
+
+**Recipe revision, 2026-11-15:** The product owner replaced runtime AI-generated
+recipes and external recipe search with the internal PostgreSQL library in
+[ADR-0011](adr/0011-internal-recipe-library.md). Prepare 50 original Swedish recipes
+as drafts and require explicit human approval before publication. This recipe
+library PR covers discovery, filtering, details and conservative stock matching,
+not favorites, preferences/allergy-profile enforcement, shopping integration or
+cooking deductions. Independent beta requirements below remain separate work;
+this PR alone does not satisfy all J04/J05 criteria. The historical blueprint is
+unchanged and its AI-recipe descriptions are superseded for this flow.
 
 ### Account, onboarding and household
 
@@ -50,9 +60,9 @@ This document records **new product-owner decisions** made after blueprint v2.0.
 
 ### Personalized recipes and cooking
 
-- Generate and browse recipes informed by household inventory, portions, dietary preferences, restrictions and disliked ingredients.
+- Browse published internal recipes and receive deterministic recommendations informed by household inventory. Respect portions, dietary preferences, restrictions and disliked ingredients when those independent flows are implemented.
 - Show available vs missing ingredients, ingredient quantities, instructions and cooking time; allow time/preference filtering and favorites.
-- Present AI suggestions as suggestions, not guaranteed allergy-safe or factually verified. Surface uncertainty and do not imply medical/food-safety guarantees.
+- Present recipe/stock suggestions with uncertainty, not guaranteed allergy-safe or physically tested. Do not imply medical/food-safety guarantees; name matches alone never prove sufficient quantity.
 - Mark a recipe as cooked, review proposed deductions, edit/skip deductions as needed and confirm before modifying shared inventory.
 - Never silently subtract inventory because a recipe was viewed, generated or selected.
 
@@ -114,7 +124,7 @@ Barcode/supermarket integrations, price comparisons, automatic replenishment, ad
 ### J04 — Personalized recipe
 
 1. A requests dinner ideas using current inventory and dietary preferences.
-2. Cena displays a generated recipe, missing ingredients, portions and instructions.
+2. Cena displays a published internal recipe, missing/partial/unknown ingredients, portions and instructions.
 3. A saves a favorite or adds missing ingredients to the shopping list.
 
 **Pass when:** The recipe displays inventory matches/missing items; dietary restrictions are passed as constraints and any uncertainty is communicated; the user can proceed without changing inventory.

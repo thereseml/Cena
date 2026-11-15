@@ -10,7 +10,12 @@
     "typecheck": "tsc --noEmit",
     "test": "jest --runInBand",
     "db:generate": "prisma generate",
-    "db:validate": "prisma validate"
+    "db:validate": "prisma validate",
+    "db:migrate:local": "PRISMA_LOCAL_ONLY=1 prisma migrate deploy",
+    "recipes:validate": "node dist/recipes/library/recipe-library.cli.js validate",
+    "recipes:review": "node dist/recipes/library/recipe-library.cli.js review",
+    "recipes:seed": "node dist/recipes/library/recipe-library.cli.js seed",
+    "recipes:publish": "node dist/recipes/library/recipe-library.cli.js publish"
   },
   "dependencies": {
     "@cena/contracts": "workspace:*",
