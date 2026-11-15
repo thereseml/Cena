@@ -18,6 +18,13 @@ Cena uses **one manually instructed AI coding assistant at a time** (Codex, Open
 
 ## Handoff and review
 
+For local Prisma migration verification, use `pnpm --filter @cena/api db:migrate:local`
+with **both** `DATABASE_URL` and `DIRECT_DATABASE_URL` explicitly set to the isolated
+local database. The direct URL takes precedence, including values loaded from
+`.env`. The local command refuses a non-loopback selected target before connecting.
+See [recipes.md](recipes.md#local-verification). Never treat a local runtime URL
+alone as evidence that a migration targets the local database.
+
 1. When requested, create a PR against `main` with the repository PR template, including linked task (if one exists), summary, acceptance evidence, checks performed, known limitations and risks.
 2. Product Owner reviews and decides whether to merge. AI must not merge, force-push or rewrite shared history without explicit authorization.
 3. GitHub Issues and labels are **optional organizational aids**; they never authorize or trigger agent execution.

@@ -1,3 +1,67 @@
+export const MEAL_CATEGORIES = ['DINNER', 'LUNCH', 'BREAKFAST', 'SNACK'] as const;
+export type MealCategory = (typeof MEAL_CATEGORIES)[number];
+export const RECIPE_UNITS = ['st', 'g', 'kg', 'ml', 'l', 'dl', 'msk', 'tsk'] as const;
+export type RecipeUnit = (typeof RECIPE_UNITS)[number];
+export type IngredientAvailability = 'AVAILABLE' | 'PARTIAL' | 'MISSING' | 'UNKNOWN';
+export type AvailabilityReason =
+  'SUFFICIENT' | 'INSUFFICIENT' | 'NOT_FOUND' | 'INCOMPATIBLE_UNIT' | 'EXPIRED' | 'UNQUANTIFIED';
+
+export interface RecipeIngredient {
+  id: string;
+  displayName: string;
+  quantity: number | null;
+  unit: RecipeUnit;
+  preparationNotes: string | null;
+  sortOrder: number;
+  availability: IngredientAvailability | null;
+  reason: AvailabilityReason | null;
+  availableQuantity: number | null;
+  missingQuantity: number | null;
+}
+
+export interface RecipeAvailabilitySummary {
+  available: number;
+  partial: number;
+  missing: number;
+  unknown: number;
+  total: number;
+}
+
+export interface RecipeSummary {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  mealCategory: MealCategory;
+  preparationMinutes: number;
+  cookingMinutes: number;
+  totalMinutes: number;
+  servings: number;
+  tags: string[];
+  availability: RecipeAvailabilitySummary | null;
+}
+
+export interface RecipeDetail extends RecipeSummary {
+  ingredients: RecipeIngredient[];
+  instructions: string[];
+}
+
+export interface RecipePage {
+  items: RecipeSummary[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export interface RecipeFilters {
+  householdId?: string;
+  search?: string;
+  mealCategory?: MealCategory;
+  maxTotalMinutes?: number;
+  page?: number;
+  pageSize?: number;
+}
+
 export interface HouseholdSummary {
   id: string;
   name: string;
