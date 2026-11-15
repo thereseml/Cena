@@ -22,7 +22,11 @@ export default function RecipeDetailScreen() {
           icon={<ArrowLeft color={colors.brand.primary} size={20} />}
           onPress={() => router.back()}
         />
-        <RecipeDetails {...result} onRetry={result.retry} />
+        <RecipeDetails
+          {...result}
+          onRetry={result.retry}
+          onAddMissing={() => router.push(`/recipe-shopping/${id}`)}
+        />
       </ScrollView>
     </SafeAreaView>
   );

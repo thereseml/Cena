@@ -8,5 +8,6 @@ import { RecipesService } from './recipes.service';
   imports: [HouseholdsModule, AuthModule],
   controllers: [RecipesController],
   providers: [RecipesService],
+  exports: [RecipesService],
 })
 export class RecipesModule {}

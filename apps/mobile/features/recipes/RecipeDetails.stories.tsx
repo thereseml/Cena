@@ -20,7 +20,13 @@ const meta = {
       </ScrollView>
     ),
   ],
-  args: { data: RECIPE_FIXTURE, loading: false, error: null, onRetry: () => undefined },
+  args: {
+    data: RECIPE_FIXTURE,
+    loading: false,
+    error: null,
+    onRetry: () => undefined,
+    onAddMissing: () => undefined,
+  },
 } satisfies Meta<typeof RecipeDetails>;
 export default meta;
 type Story = StoryObj<typeof meta>;

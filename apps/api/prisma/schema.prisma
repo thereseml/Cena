@@ -83,21 +83,22 @@ model Product {
 }
 
 model InventoryItem {
-  id              String           @id @default(uuid()) @db.Uuid
-  householdId     String           @map("household_id") @db.Uuid
-  createRequestId String           @map("create_request_id")
-  productId       String           @map("product_id") @db.Uuid
-  displayName     String           @map("display_name")
+  id              String             @id @default(uuid()) @db.Uuid
+  householdId     String             @map("household_id") @db.Uuid
+  createRequestId String             @map("create_request_id")
+  productId       String             @map("product_id") @db.Uuid
+  displayName     String             @map("display_name")
   unit            InventoryUnit
-  storageLocation StorageLocation  @map("storage_location")
-  archivedAt      DateTime?        @map("archived_at")
-  version         Int              @default(0)
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
-  household       Household        @relation(fields: [householdId], references: [id], onDelete: Restrict)
-  product         Product          @relation(fields: [productId], references: [id], onDelete: Restrict)
+  storageLocation StorageLocation    @map("storage_location")
+  archivedAt      DateTime?          @map("archived_at")
+  version         Int                @default(0)
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  household       Household          @relation(fields: [householdId], references: [id], onDelete: Restrict)
+  product         Product            @relation(fields: [productId], references: [id], onDelete: Restrict)
   batches         ProductBatch[]
   events          InventoryEvent[]
+  shoppingImports ShoppingListItem[]
 
   @@unique([householdId, createRequestId])
   @@index([householdId, archivedAt, storageLocation])
@@ -147,8 +148,45 @@ model Household {
   members         HouseholdMember[]
   inventoryItems  InventoryItem[]
   inventoryEvents InventoryEvent[]
+  shoppingList    ShoppingList?
 
   @@map("households")
+}
+
+model ShoppingList {
+  id          String             @id @default(uuid()) @db.Uuid
+  householdId String             @unique @map("household_id") @db.Uuid
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+  household   Household          @relation(fields: [householdId], references: [id], onDelete: Restrict)
+  items       ShoppingListItem[]
+
+  @@map("shopping_lists")
+}
+
+model ShoppingListItem {
+  id                      String         @id @default(uuid()) @db.Uuid
+  shoppingListId          String         @map("shopping_list_id") @db.Uuid
+  name                    String
+  normalizedName          String         @map("normalized_name")
+  quantity                Decimal?       @db.Decimal(12, 3)
+  unit                    InventoryUnit?
+  isPurchased             Boolean        @default(false) @map("is_purchased")
+  recipeId                String?        @map("recipe_id") @db.Uuid
+  recipeTitle             String?        @map("recipe_title")
+  recipeIngredientId      String?        @map("recipe_ingredient_id") @db.Uuid
+  importedInventoryItemId String?        @unique @map("imported_inventory_item_id") @db.Uuid
+  transferredAt           DateTime?      @map("transferred_at")
+  version                 Int            @default(0)
+  createdAt               DateTime       @default(now()) @map("created_at")
+  updatedAt               DateTime       @updatedAt @map("updated_at")
+  shoppingList            ShoppingList   @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+  recipe                  Recipe?        @relation(fields: [recipeId], references: [id], onDelete: Restrict)
+  importedInventoryItem   InventoryItem? @relation(fields: [importedInventoryItemId], references: [id], onDelete: Restrict)
+
+  @@index([shoppingListId, transferredAt, isPurchased, createdAt])
+  @@index([recipeId])
+  @@map("shopping_list_items")
 }
 
 model HouseholdMember {
@@ -197,6 +235,7 @@ model Recipe {
   createdAt          DateTime           @default(now()) @map("created_at")
   updatedAt          DateTime           @updatedAt @map("updated_at")
   ingredients        RecipeIngredient[]
+  shoppingItems      ShoppingListItem[]
 
   @@index([status, mealCategory, totalMinutes])
   @@index([status, title, id])

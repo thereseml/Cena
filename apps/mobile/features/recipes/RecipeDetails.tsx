@@ -9,6 +9,7 @@ export interface RecipeDetailsProps {
   loading: boolean;
   error: string | null;
   onRetry: () => void;
+  onAddMissing: () => void;
 }
 
 const AVAILABILITY_LABELS: Record<IngredientAvailability, string> = {
@@ -18,7 +19,13 @@ const AVAILABILITY_LABELS: Record<IngredientAvailability, string> = {
   UNKNOWN: 'Okänd tillgång',
 };
 
-export function RecipeDetails({ data: recipe, loading, error, onRetry }: RecipeDetailsProps) {
+export function RecipeDetails({
+  data: recipe,
+  loading,
+  error,
+  onRetry,
+  onAddMissing,
+}: RecipeDetailsProps) {
   if (loading)
     return (
       <ActivityIndicator
@@ -59,6 +66,11 @@ export function RecipeDetails({ data: recipe, loading, error, onRetry }: RecipeD
         Ingredienser
       </Text>
       <RecipeAvailability availability={recipe.availability} />
+      {recipe.availability &&
+      recipe.availability.missing + recipe.availability.partial + recipe.availability.unknown >
+        0 ? (
+        <Button label="Lägg till saknade ingredienser" variant="secondary" onPress={onAddMissing} />
+      ) : null}
       <Text variant="bodySmall">
         Saknade mängder och okänd tillgång visas nedan. Kontrollera vad du har hemma innan du
         börjar.
