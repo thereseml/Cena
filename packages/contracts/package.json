@@ -15,7 +15,7 @@
     "test": "node -e \"console.log('No contract tests configured yet')\""
   },
   "devDependencies": {
-    "typescript": "~5.9.2",
+    "typescript": "~7.0.2",
     "eslint": "^9.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0"
