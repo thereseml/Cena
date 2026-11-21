@@ -24,6 +24,7 @@ export interface MatchingBatch {
   unit: RecipeUnit;
   expiryDate: string | null;
   expiryType: 'BEST_BEFORE' | 'USE_BY' | null;
+  expirySource?: 'USER_ENTERED' | 'ESTIMATED' | null;
 }
 
 interface PreparedBatch extends MatchingBatch {
@@ -73,9 +74,14 @@ export function matchRecipe(
   ingredients: readonly MatchingIngredient[],
   batches: readonly MatchingBatch[] | PreparedRecipeInventory,
   today: string,
-): { ingredients: RecipeIngredient[]; summary: RecipeAvailabilitySummary } {
+): {
+  ingredients: RecipeIngredient[];
+  summary: RecipeAvailabilitySummary;
+  usesExpiringIngredients: boolean;
+} {
   const inventory = 'byIngredient' in batches ? batches : prepareRecipeInventory(batches);
   const pools = new Map<string, PreparedBatch[]>();
+  let usesExpiringIngredients = false;
   const rows = [...ingredients]
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((ingredient): RecipeIngredient => {
@@ -112,6 +118,15 @@ export function matchRecipe(
             continue;
           }
           const take = Prisma.Decimal.min(batch.remaining, required.minus(allocated));
+          if (
+            take.gt(0) &&
+            batch.expirySource === 'USER_ENTERED' &&
+            batch.expiryDate !== null &&
+            batch.expiryDate >= today &&
+            batch.expiryDate <= addCalendarDays(today, 3)
+          ) {
+            usesExpiringIngredients = true;
+          }
           batch.remaining = batch.remaining.minus(take);
           allocated = allocated.plus(take);
           if (allocated.gte(required)) break;
@@ -159,13 +174,20 @@ export function matchRecipe(
     else if (row.availability === 'MISSING') summary.missing++;
     else summary.unknown++;
   }
-  return { ingredients: rows, summary };
+  return { ingredients: rows, summary, usesExpiringIngredients };
+}
+
+function addCalendarDays(date: string, days: number): string {
+  const [year, month, day] = date.split('-').map(Number);
+  const value = new Date(Date.UTC(year, month - 1, day + days));
+  return `${value.getUTCFullYear()}-${String(value.getUTCMonth() + 1).padStart(2, '0')}-${String(value.getUTCDate()).padStart(2, '0')}`;
 }
 
 export interface RankedRecipe {
   id: string;
   totalMinutes: number;
   availability: RecipeAvailabilitySummary | null;
+  usesExpiringIngredients?: boolean;
 }
 
 export function compareRecipeRank(a: RankedRecipe, b: RankedRecipe): number {
@@ -178,6 +200,7 @@ export function compareRecipeRank(a: RankedRecipe, b: RankedRecipe): number {
     x.missing - y.missing ||
     x.unknown - y.unknown ||
     y.partial - x.partial ||
+    Number(b.usesExpiringIngredients ?? false) - Number(a.usesExpiringIngredients ?? false) ||
     a.totalMinutes - b.totalMinutes ||
     a.id.localeCompare(b.id)
   );

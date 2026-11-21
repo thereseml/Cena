@@ -1,4 +1,4 @@
-import type { InventoryUnit, ShoppingListItem } from '@cena/contracts';
+import type { ExpiryType, InventoryUnit, ShoppingListItem } from '@cena/contracts';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
@@ -9,6 +9,8 @@ import { useAuth } from '../features/auth/AuthProvider';
 import { useShoppingList, shoppingMutationMessage } from '../features/shopping/useShoppingList';
 import { shoppingPath } from '../features/shopping/shopping-api';
 import { apiRequest } from '../lib/api';
+import { FoodDateField } from '../features/inventory/FoodDateField';
+import { isCalendarDate } from '../features/inventory/expiry';
 
 type Draft = {
   selected: boolean;
@@ -16,6 +18,8 @@ type Draft = {
   quantity: string;
   unit: InventoryUnit | null;
   storageLocation: 'FRIDGE' | 'FREEZER' | 'PANTRY' | null;
+  expiryDate: string;
+  expiryType: ExpiryType | null;
 };
 const UNITS: InventoryUnit[] = ['st', 'g', 'kg', 'ml', 'l'];
 const STORAGE = [
@@ -45,6 +49,8 @@ export default function ShoppingImportScreen() {
         quantity: item.quantity === null ? '' : String(item.quantity).replace('.', ','),
         unit: item.unit,
         storageLocation: null,
+        expiryDate: '',
+        expiryType: null,
       }
     );
   }
@@ -76,6 +82,12 @@ export default function ShoppingImportScreen() {
       ) {
         return setError(`Fyll i namn, mängd, enhet och förvaring för ${item.name}.`);
       }
+      if (draft.expiryDate && !isCalendarDate(draft.expiryDate)) {
+        return setError(`Ange datum som ÅÅÅÅ-MM-DD för ${item.name}.`);
+      }
+      if (draft.expiryDate && !draft.expiryType) {
+        return setError(`Välj datumtyp för ${item.name}.`);
+      }
       entries.push({
         shoppingListItemId: item.id,
         expectedVersion: item.version,
@@ -83,9 +95,9 @@ export default function ShoppingImportScreen() {
         quantity,
         unit: draft.unit,
         storageLocation: draft.storageLocation,
-        expiryDate: null,
-        expiryType: null,
-        expirySource: null,
+        expiryDate: draft.expiryDate || null,
+        expiryType: draft.expiryDate ? draft.expiryType : null,
+        expirySource: draft.expiryDate ? 'USER_ENTERED' : null,
       });
     }
     submitted.current = true;
@@ -191,6 +203,12 @@ export default function ShoppingImportScreen() {
                   />
                 ))}
               </View>
+              <FoodDateField
+                date={draft.expiryDate}
+                type={draft.expiryType}
+                disabled={saving}
+                onChange={(expiryDate, expiryType) => change(item, { expiryDate, expiryType })}
+              />
             </Card>
           );
         })}

@@ -70,6 +70,7 @@ function isSummary(value: unknown): value is RecipeSummary {
     isNumber(value.servings) &&
     value.servings > 0 &&
     isStrings(value.tags) &&
+    typeof value.usesExpiringIngredients === 'boolean' &&
     (value.availability === null || isAvailability(value.availability))
   );
 }

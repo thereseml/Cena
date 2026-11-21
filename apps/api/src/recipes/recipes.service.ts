@@ -151,6 +151,7 @@ export class RecipesService {
     today: string,
   ): RecipeSummary {
     const { ...fields } = row;
+    const match = batches ? matchRecipe(this.ingredients(ingredients), batches, today) : null;
     // Explicit projection: Prisma rows can also carry instructions and ingredient relations.
     return {
       id: fields.id,
@@ -163,9 +164,8 @@ export class RecipesService {
       totalMinutes: fields.totalMinutes,
       servings: fields.servings,
       tags: fields.tags,
-      availability: batches
-        ? matchRecipe(this.ingredients(ingredients), batches, today).summary
-        : null,
+      availability: match?.summary ?? null,
+      usesExpiringIngredients: match?.usesExpiringIngredients ?? false,
     };
   }
 
@@ -195,6 +195,7 @@ export class RecipesService {
         unit: unitFromDatabase(item.unit),
         expiryDate: batch.expiryDate?.toISOString().slice(0, 10) ?? null,
         expiryType: batch.expiryType,
+        expirySource: batch.expirySource,
       }));
     });
   }

@@ -2,7 +2,12 @@ import { fireEvent, render } from '@testing-library/react-native';
 import type { InventoryItem } from '@cena/contracts';
 import { router } from 'expo-router';
 import { InventoryItemForm } from '../features/inventory/InventoryItemForm';
-import { getExpiryLabel, isUseSoon } from '../features/inventory/expiry';
+import {
+  getExpiryLabel,
+  getExpiryStatus,
+  isUseSoon,
+  stockholmCalendarDate,
+} from '../features/inventory/expiry';
 import { useHouseholdInventory } from '../features/inventory/useHouseholdInventory';
 import KitchenScreen from '../app/(tabs)/kitchen';
 import HomeScreen from '../app/(tabs)/index';
@@ -139,6 +144,71 @@ describe('KitchenScreen', () => {
     expect(queryByText('Mjölk')).toBeNull();
   });
 
+  it('filters and sorts by dates while retaining undated items last', async () => {
+    const today = stockholmCalendarDate();
+    const nearDate = inventoryDateOffset(today, 1);
+    const passedDate = inventoryDateOffset(today, -1);
+    const soon: InventoryItem = {
+      ...fridgeItem,
+      id: 'cream',
+      name: 'Grädde',
+      batches: [{ ...fridgeItem.batches[0], id: 'cream-batch', expiryDate: nearDate, expiryType: 'BEST_BEFORE', expirySource: 'USER_ENTERED' }],
+    };
+    const passed: InventoryItem = {
+      ...fridgeItem,
+      id: 'chicken',
+      name: 'Kyckling',
+      batches: [{ ...fridgeItem.batches[0], id: 'chicken-batch', expiryDate: passedDate, expiryType: 'USE_BY', expirySource: 'USER_ENTERED' }],
+    };
+    const later: InventoryItem = {
+      ...fridgeItem,
+      id: 'pasta-date',
+      name: 'Ris',
+      batches: [
+        { ...fridgeItem.batches[0], id: 'rice-batch', expiryDate: inventoryDateOffset(today, 5), expiryType: 'BEST_BEFORE', expirySource: 'USER_ENTERED' },
+        { ...fridgeItem.batches[0], id: 'rice-later-batch', expiryDate: inventoryDateOffset(today, 10), expiryType: 'BEST_BEFORE', expirySource: 'USER_ENTERED' },
+      ],
+    };
+    useInventoryMock.mockReturnValue({
+      householdId: 'household-id',
+      items: [fridgeItem, later, soon, passed],
+      loading: false,
+      error: null,
+      retry: jest.fn(),
+    });
+
+    const screen = await render(<KitchenScreen />);
+    await fireEvent.press(screen.getByText('Snart datum'));
+    expect(screen.getByText('Grädde')).toBeTruthy();
+    expect(screen.queryByText('Kyckling')).toBeNull();
+    await fireEvent.press(screen.getByText('Datum passerat'));
+    expect(screen.getByText('Kyckling')).toBeTruthy();
+    expect(screen.queryByText('Grädde')).toBeNull();
+    await fireEvent.press(screen.getByText('Alla varor'));
+    await fireEvent.press(screen.getByText('Sortera: Tidigaste datum'));
+    const productOrder = screen
+      .getAllByRole('button')
+      .map((node) => node.props.accessibilityLabel as string)
+      .filter((label) => /^(Kyckling|Grädde|Ris|Mjölk),/.test(label));
+    expect(productOrder.map((label) => label.split(',')[0])).toEqual([
+      'Kyckling',
+      'Grädde',
+      'Ris',
+      'Mjölk',
+    ]);
+    await fireEvent.press(screen.getByText('Sortera: Senaste datum'));
+    const latestOrder = screen
+      .getAllByRole('button')
+      .map((node) => node.props.accessibilityLabel as string)
+      .filter((label) => /^(Kyckling|Grädde|Ris|Mjölk),/.test(label));
+    expect(latestOrder.map((label) => label.split(',')[0])).toEqual([
+      'Ris',
+      'Grädde',
+      'Kyckling',
+      'Mjölk',
+    ]);
+  });
+
   it('searches persisted inventory by food name', async () => {
     const { getByLabelText, getByText, queryByText } = await render(<KitchenScreen />);
     await fireEvent.changeText(getByLabelText('Sök i ditt kök'), 'pasta');
@@ -154,6 +224,12 @@ describe('KitchenScreen', () => {
     expect(queryByText('Sök i ditt kök')).toBeNull();
   });
 });
+
+function inventoryDateOffset(date: string, offset: number): string {
+  const [year, month, day] = date.split('-').map(Number);
+  const result = new Date(Date.UTC(year, month - 1, day + offset));
+  return `${result.getUTCFullYear()}-${String(result.getUTCMonth() + 1).padStart(2, '0')}-${String(result.getUTCDate()).padStart(2, '0')}`;
+}
 
 describe('HomeScreen inventory summary', () => {
   it('shows persisted inventory counts and links to recipes without mock availability', async () => {
@@ -277,7 +353,17 @@ describe('expiry labels', () => {
         },
         now,
       ),
-    ).toEqual({ text: 'Sista förbrukningsdag passerad', urgency: 'passed' });
+    ).toEqual({ text: 'Sista förbrukningsdag har passerat', urgency: 'passed' });
+  });
+
+  it.each([
+    [null, 'NO_DATE'],
+    ['2026-11-19', 'FUTURE'],
+    ['2026-11-16', 'EXPIRING_SOON'],
+    ['2026-11-13', 'DATE_REACHED'],
+    ['2026-11-12', 'DATE_PASSED'],
+  ] as const)('classifies %s relative to the Stockholm calendar day', (date, expected) => {
+    expect(getExpiryStatus(date, now)).toBe(expected);
   });
 
   it('identifies the documented three-day use-soon window and preserves estimates', () => {

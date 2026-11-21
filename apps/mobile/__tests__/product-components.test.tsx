@@ -58,7 +58,7 @@ describe('product list components', () => {
     expect(getByText(longName)).toBeTruthy();
   });
 
-  it('shows the label for the earliest-expiring batch', async () => {
+  it('shows dates for each batch without collapsing them', async () => {
     const item: InventoryItem = {
       ...milk,
       batches: [
@@ -66,10 +66,52 @@ describe('product list components', () => {
         { ...milk.batches[0], id: 'earlier', expiryDate: '2030-11-14' },
       ],
     };
-    const { getByText, queryByText } = await render(<InventoryItemRow item={item} />);
+    const { getByText } = await render(<InventoryItemRow item={item} />);
 
     expect(getByText('Bäst före 14 nov.')).toBeTruthy();
-    expect(queryByText('Bäst före 20 nov.')).toBeNull();
+    expect(getByText('Bäst före 20 nov.')).toBeTruthy();
+  });
+
+  it('shows a passed use-by warning even when another batch has a different earlier date', async () => {
+    const item: InventoryItem = {
+      ...milk,
+      batches: [
+        { ...milk.batches[0], id: 'best-before', expiryDate: '2030-11-19' },
+        {
+          ...milk.batches[0],
+          id: 'use-by',
+          expiryDate: '2030-11-20',
+          expiryType: 'USE_BY',
+        },
+      ],
+    };
+    const { getByText } = await render(
+      <InventoryItemRow item={item} now={new Date('2030-11-21T12:00:00Z')} />,
+    );
+
+    expect(getByText('Sista förbrukningsdag har passerat')).toBeTruthy();
+    expect(getByText('Livsmedel ska inte användas efter sista förbrukningsdag.')).toBeTruthy();
+  });
+
+  it('does not present an estimated use-by date as a verified safety warning', async () => {
+    const item: InventoryItem = {
+      ...milk,
+      batches: [
+        {
+          ...milk.batches[0],
+          expiryDate: '2030-11-19',
+          expiryType: 'USE_BY',
+          expirySource: 'ESTIMATED',
+        },
+      ],
+    };
+    const { getByText, queryByText } = await render(
+      <InventoryItemRow item={item} now={new Date('2030-11-21T12:00:00Z')} />,
+    );
+
+    expect(getByText('Uppskattat datum passerat')).toBeTruthy();
+    expect(getByText('Uppskattat datum. Kontrollera datumet på förpackningen.')).toBeTruthy();
+    expect(queryByText('Livsmedel ska inte användas efter sista förbrukningsdag.')).toBeNull();
   });
 
   it('announces shopping checkbox state and invokes the toggle handler', async () => {

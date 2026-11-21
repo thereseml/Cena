@@ -11,6 +11,8 @@ import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button, colors, FilterChip, Input, spacing, Text } from '@cena/ui';
 import { apiErrorMessage } from '../../lib/api';
+import { FoodDateField } from './FoodDateField';
+import { isCalendarDate } from './expiry';
 
 const UNIT_LABELS: Record<InventoryUnit, string> = {
   st: 'st',
@@ -24,11 +26,6 @@ const STORAGE_OPTIONS: { value: StorageLocation; label: string }[] = [
   { value: 'PANTRY', label: 'Skafferi' },
   { value: 'FREEZER', label: 'Frys' },
 ];
-const EXPIRY_OPTIONS: { value: ExpiryType; label: string }[] = [
-  { value: 'BEST_BEFORE', label: 'Bäst före' },
-  { value: 'USE_BY', label: 'Sista förbrukningsdag' },
-];
-
 export interface InventoryItemFormInitialValues extends Omit<
   Partial<SaveInventoryItemInput>,
   'quantity' | 'unit'
@@ -194,31 +191,16 @@ export function InventoryItemForm({
         </View>
       </View>
 
-      <Input
-        label="Datum (valfritt)"
-        value={expiryDate}
-        onChangeText={setExpiryDate}
-        placeholder="ÅÅÅÅ-MM-DD"
-        accessibilityHint="Ange datum som fyra siffror för år, två för månad och två för dag."
-        editable={!saving}
-        maxLength={10}
+      <FoodDateField
+        date={expiryDate}
+        type={expiryType}
+        disabled={saving}
+        onChange={(date, type) => {
+          setExpiryDate(date);
+          setExpiryType(type);
+          setFieldError(null);
+        }}
       />
-      {expiryDate.trim() ? (
-        <View style={styles.field}>
-          <Text variant="label">Datumtyp</Text>
-          <View style={styles.options}>
-            {EXPIRY_OPTIONS.map((option) => (
-              <FilterChip
-                key={option.value}
-                label={option.label}
-                selected={expiryType === option.value}
-                disabled={saving}
-                onPress={() => setExpiryType(option.value)}
-              />
-            ))}
-          </View>
-        </View>
-      ) : null}
 
       {fieldError ? (
         <Text accessibilityRole="alert" style={styles.error}>
@@ -247,17 +229,6 @@ function createRequestKey(): string {
 function decimalPlaces(value: number): number {
   const [coefficient, exponentText] = value.toString().toLowerCase().split('e');
   return (coefficient.split('.')[1]?.length ?? 0) - Number(exponentText ?? 0);
-}
-
-function isCalendarDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const [year, month, day] = value.split('-').map(Number);
-  const date = new Date(0);
-  date.setUTCHours(0, 0, 0, 0);
-  date.setUTCFullYear(year, month - 1, day);
-  return (
-    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
-  );
 }
 
 const styles = StyleSheet.create({

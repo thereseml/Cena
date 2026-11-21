@@ -318,4 +318,57 @@ describe('recommendation ranking', () => {
     expect(compareRecipeRank(ranked('a'), ranked('a'))).toBe(0);
     expect(compareRecipeRank({ ...ranked('a'), availability: null }, ranked('b'))).toBeLessThan(0);
   });
+
+  it('uses an allocated user-entered date as a secondary tie breaker only', () => {
+    const soon = matchRecipe(
+      [ingredient()],
+      [batch({ expiryDate: '2026-11-16', expiryType: 'USE_BY', expirySource: 'USER_ENTERED' })],
+      TODAY,
+    );
+    expect(soon.usesExpiringIngredients).toBe(true);
+    expect(
+      compareRecipeRank(
+        { ...ranked('soon'), usesExpiringIngredients: soon.usesExpiringIngredients },
+        ranked('ordinary'),
+      ),
+    ).toBeLessThan(0);
+    expect(
+      compareRecipeRank(
+        ranked('better-match', 2, 2),
+        { ...ranked('soon'), usesExpiringIngredients: true },
+      ),
+    ).toBeLessThan(0);
+  });
+
+  it('does not signal urgency for estimates, unused batches or dates outside three days', () => {
+    expect(
+      matchRecipe(
+        [ingredient()],
+        [batch({ expiryDate: '2026-11-16', expiryType: 'USE_BY', expirySource: 'ESTIMATED' })],
+        TODAY,
+      ).usesExpiringIngredients,
+    ).toBe(false);
+    expect(
+      matchRecipe(
+        [ingredient({ quantity: new Prisma.Decimal('0.3') })],
+        [
+          batch({
+            quantity: '100',
+            expiryDate: '2026-11-16',
+            expiryType: 'BEST_BEFORE',
+            expirySource: 'USER_ENTERED',
+          }),
+          batch({ id: 'later', quantity: '200', expiryDate: null }),
+        ],
+        TODAY,
+      ).usesExpiringIngredients,
+    ).toBe(true);
+    expect(
+      matchRecipe(
+        [ingredient()],
+        [batch({ expiryDate: '2026-11-19', expiryType: 'USE_BY', expirySource: 'USER_ENTERED' })],
+        TODAY,
+      ).usesExpiringIngredients,
+    ).toBe(false);
+  });
 });

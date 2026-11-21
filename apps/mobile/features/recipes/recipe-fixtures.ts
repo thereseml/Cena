@@ -13,6 +13,7 @@ export const RECIPE_FIXTURE: RecipeDetail = {
   servings: 2,
   tags: ['Vardag'],
   availability: { available: 1, partial: 1, missing: 1, unknown: 1, total: 4 },
+  usesExpiringIngredients: true,
   ingredients: [
     {
       id: 'pasta',
