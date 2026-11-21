@@ -33,6 +33,7 @@ export const FewerIngredientsAvailable: Story = {
     recipe: {
       ...RECIPE_FIXTURE,
       availability: { available: 0, partial: 1, missing: 2, unknown: 1, total: 4 },
+      usesExpiringIngredients: true,
     },
   },
 };

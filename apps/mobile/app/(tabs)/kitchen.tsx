@@ -16,9 +16,14 @@ import { useState } from 'react';
 import { InventoryItemRow } from '../../components/InventoryItemRow';
 import { TabScreen } from '../../components/TabScreen';
 import { useHouseholdInventory } from '../../features/inventory/useHouseholdInventory';
+import { getExpiryStatus } from '../../features/inventory/expiry';
 
 const LOCATIONS = ['Alla', 'Kylskåp', 'Skafferi', 'Frys'] as const;
 type LocationFilter = (typeof LOCATIONS)[number];
+const DATE_FILTERS = ['Alla varor', 'Snart datum', 'Datum passerat', 'Utan datum'] as const;
+type DateFilter = (typeof DATE_FILTERS)[number];
+const SORT_OPTIONS = ['Standard', 'Tidigaste datum', 'Senaste datum'] as const;
+type SortOption = (typeof SORT_OPTIONS)[number];
 const LOCATION_FILTERS = {
   Kylskåp: 'FRIDGE',
   Frys: 'FREEZER',
@@ -28,13 +33,37 @@ const LOCATION_FILTERS = {
 export default function KitchenScreen() {
   const [selectedLocation, setSelectedLocation] = useState<LocationFilter>('Alla');
   const [search, setSearch] = useState('');
+  const [selectedDate, setSelectedDate] = useState<DateFilter>('Alla varor');
+  const [sort, setSort] = useState<SortOption>('Standard');
   const { items, loading, error, retry } = useHouseholdInventory();
   const normalizedSearch = search.trim().toLocaleLowerCase('sv-SE');
   const products = items.filter((item) => {
     const matchesLocation =
       selectedLocation === 'Alla' || item.storageLocation === LOCATION_FILTERS[selectedLocation];
     const matchesSearch = item.name.toLocaleLowerCase('sv-SE').includes(normalizedSearch);
-    return matchesLocation && matchesSearch;
+    const statuses = item.batches.map((batch) => getExpiryStatus(batch.expiryDate));
+    const matchesDate =
+      selectedDate === 'Alla varor' ||
+      (selectedDate === 'Snart datum' && statuses.some((status) => status === 'DATE_REACHED' || status === 'EXPIRING_SOON')) ||
+      (selectedDate === 'Datum passerat' && statuses.includes('DATE_PASSED')) ||
+      (selectedDate === 'Utan datum' && statuses.every((status) => status === 'NO_DATE'));
+    return matchesLocation && matchesSearch && matchesDate;
+  }).sort((left, right) => {
+    if (sort === 'Standard') return 0;
+    const dateForSort = (item: (typeof items)[number]) => {
+      const dates = item.batches
+        .map((batch) => batch.expiryDate)
+        .filter((date): date is string => date !== null)
+        .sort();
+      return sort === 'Tidigaste datum' ? dates[0] ?? null : dates.at(-1) ?? null;
+    };
+    const leftDate = dateForSort(left);
+    const rightDate = dateForSort(right);
+    if (leftDate === null) return rightDate === null ? 0 : 1;
+    if (rightDate === null) return -1;
+    return sort === 'Tidigaste datum'
+      ? leftDate.localeCompare(rightDate)
+      : rightDate.localeCompare(leftDate);
   });
   const eyebrow = getInventoryCountLabel(items.length, loading, error);
 
@@ -98,6 +127,29 @@ export default function KitchenScreen() {
           ))}
         </ScrollView>
 
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
+          {DATE_FILTERS.map((filter) => (
+            <FilterChip
+              key={filter}
+              label={filter}
+              selected={selectedDate === filter}
+              onPress={() => setSelectedDate(filter)}
+              style={styles.filterChip}
+            />
+          ))}
+        </ScrollView>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
+          {SORT_OPTIONS.map((option) => (
+            <FilterChip
+              key={option}
+              label={`Sortera: ${option}`}
+              selected={sort === option}
+              onPress={() => setSort(option)}
+              style={styles.filterChip}
+            />
+          ))}
+        </ScrollView>
+
         <View style={styles.productList}>
           {loading ? (
             <View
@@ -123,9 +175,11 @@ export default function KitchenScreen() {
             />
           ) : products.length === 0 ? (
             <EmptyState
-              title={normalizedSearch ? 'Inga varor matchar sökningen' : 'Inga varor här än'}
+              title={normalizedSearch ? 'Inga varor matchar sökningen' : 'Inga varor matchar filtret'}
               description={
-                normalizedSearch ? 'Prova ett annat sökord.' : 'Välj en annan förvaringsplats.'
+                normalizedSearch
+                  ? 'Prova ett annat sökord eller ändra dina filter.'
+                  : 'Ändra datumfilter eller förvaringsplats.'
               }
             />
           ) : (

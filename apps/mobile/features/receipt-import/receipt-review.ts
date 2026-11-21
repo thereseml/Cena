@@ -1,11 +1,14 @@
-import type { SaveInventoryItemInput } from '@cena/contracts';
+import type { ExpiryType, SaveInventoryItemInput } from '@cena/contracts';
 import type { ReceiptProduct } from './receipt-parser';
+import { isCalendarDate } from '../inventory/expiry';
 
 export interface ReceiptReviewItem extends Omit<ReceiptProduct, 'quantity'> {
   quantity: string;
   selected: boolean;
   suggestedQuantity: boolean;
   suggestedUnit: boolean;
+  expiryDate: string;
+  expiryType: ExpiryType | null;
 }
 
 export function toReviewItem(product: ReceiptProduct): ReceiptReviewItem {
@@ -16,6 +19,8 @@ export function toReviewItem(product: ReceiptProduct): ReceiptReviewItem {
     selected: product.classification === 'FOOD',
     suggestedQuantity: product.quantity === null,
     suggestedUnit: product.unit === null,
+    expiryDate: '',
+    expiryType: null,
   };
 }
 
@@ -31,6 +36,8 @@ export function reviewItemError(item: ReceiptReviewItem): string | null {
   }
   if (!item.unit) return 'Välj en enhet.';
   if (!item.storageLocation) return 'Välj förvaring innan du lägger till varan.';
+  if (item.expiryDate && !isCalendarDate(item.expiryDate)) return 'Ange datum som ÅÅÅÅ-MM-DD.';
+  if (item.expiryDate && !item.expiryType) return 'Välj Bäst före eller Sista förbrukningsdag.';
   return null;
 }
 
@@ -43,9 +50,9 @@ export function toInventoryInput(item: ReceiptReviewItem): SaveInventoryItemInpu
     quantity: Number(item.quantity.trim().replace(',', '.')),
     unit: item.unit,
     storageLocation: item.storageLocation,
-    expiryDate: null,
-    expiryType: null,
-    expirySource: null,
+    expiryDate: item.expiryDate || null,
+    expiryType: item.expiryDate ? item.expiryType : null,
+    expirySource: item.expiryDate ? 'USER_ENTERED' : null,
   };
 }
 

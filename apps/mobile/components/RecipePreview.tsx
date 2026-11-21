@@ -35,6 +35,11 @@ export function RecipePreview({ recipe, onPress }: RecipePreviewProps) {
         </Text>
         <View style={styles.footer}>
           <RecipeAvailability availability={recipe.availability} />
+          {recipe.usesExpiringIngredients ? (
+            <Text variant="caption" style={styles.expiring}>
+              Använder ingredienser som snart når sitt datum
+            </Text>
+          ) : null}
         </View>
       </Card>
     </Pressable>
@@ -57,4 +62,5 @@ const styles = StyleSheet.create({
   name: { color: colors.brand.primary, marginBottom: spacing.xs },
   description: { lineHeight: 21 },
   footer: { marginTop: spacing.md, gap: spacing.sm, alignItems: 'flex-start' },
+  expiring: { color: colors.semantic.warning },
 });

@@ -2,6 +2,7 @@ import { INVENTORY_UNITS, type StorageLocation } from '@cena/contracts';
 import { Badge, Button, Card, Checkbox, FilterChip, Input, spacing, Text } from '@cena/ui';
 import { StyleSheet, View } from 'react-native';
 import { reviewItemError, type ReceiptReviewItem } from './receipt-review';
+import { FoodDateField } from '../inventory/FoodDateField';
 
 const STORAGE: { value: StorageLocation; label: string }[] = [
   { value: 'FRIDGE', label: 'Kylskåp' },
@@ -93,6 +94,12 @@ export function ReceiptProductCard({
           />
         ))}
       </View>
+      <FoodDateField
+        date={item.expiryDate}
+        type={item.expiryType}
+        disabled={disabled}
+        onChange={(expiryDate, expiryType) => onChange({ ...item, expiryDate, expiryType })}
+      />
       {error ? <Text accessibilityRole="alert">{error}</Text> : null}
       <Button
         label={`Ta bort ${item.name || 'varan'}`}

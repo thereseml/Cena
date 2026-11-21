@@ -11,7 +11,9 @@ The first manual inventory flow uses PostgreSQL as its source of truth. Mobile r
 
 Current active quantity is the sum of batches on non-archived inventory items; there is no duplicate quantity column on `InventoryItem`. Event deltas are not replayed to derive a balance. This keeps an archived row out of active totals while retaining its batches and events, without counting the removal event twice. Item, batch and event changes are committed in a single Prisma transaction. Inventory mutations increment `version`; edits and removals send the version they read and return `409 Conflict` rather than overwriting a concurrent household change.
 
-Expiry date uses PostgreSQL `DATE` and the API wire format `YYYY-MM-DD`. Date, type and source must either all be present or all be null. The types are `BEST_BEFORE` and `USE_BY`; sources are `USER_ENTERED` and `ESTIMATED`. Manually entered dates use `USER_ENTERED`. The mobile overview uses a temporary three-calendar-day “use soon” threshold; an expired best-before date is not presented as a food-safety verdict.
+Expiry date uses PostgreSQL `DATE` and the API wire format `YYYY-MM-DD`. Date, type and source must either all be present or all be null. The types are `BEST_BEFORE` and `USE_BY`; sources are `USER_ENTERED` and `ESTIMATED`. Manually entered dates use `USER_ENTERED`. Dates remain optional and are never inferred from purchase dates or names. Calendar-day status uses `Europe/Stockholm`; today through three calendar days ahead is considered soon. Status is derived at read/render time and is not persisted.
+
+Best-before (`Bäst före`) dates describe quality; passing that date neither removes the item nor establishes that it is unsafe or safe. Use-by (`Sista förbrukningsdag`) dates are safety-related; past user-entered dates are explicitly marked and must not be used. An estimated date is labeled as estimated and is not presented as verified package information. Neither date type is a safety guarantee. Multiple batches retain and display their own dates. Date filters include an item when any batch matches, while `Utan datum` means all its batches lack dates.
 
 The migration enables RLS on every new `public` table without granting direct mobile access. The NestJS API uses the server database role, which bypasses RLS, so the API membership check remains the authorization boundary. Never connect the mobile client directly to these tables.
 
@@ -31,7 +33,7 @@ Units are `st`, `g`, `kg`, `ml` and `l`. Storage values are `FRIDGE`, `FREEZER` 
 
 ## Mobile and local development
 
-The kitchen screen fetches the selected household's inventory whenever it gains focus, so returning from add/edit/delete refreshes data from the API. Search and storage filters operate on that fetched data. The Home inventory summary uses the same endpoint. API errors do not fall back to examples. The recipe and shopping previews remain mock data and are outside this feature.
+The kitchen screen fetches the selected household's inventory whenever it gains focus, so returning from add/edit/delete refreshes data from the API. Search, storage and date filters operate together on that fetched data. Date filters are all items, soon (today through three days), past date, and no date. Earliest-date sorting uses the earliest batch date; latest-date sorting uses the latest batch date. Undated items stay last in both directions; default ordering remains the server order. The API list is currently unpaginated, so no additional server query or pagination behavior is needed. Manual entry, receipt review and shopping transfer accept optional user-entered date and type; receipt purchase dates are not used as expiry dates. API errors do not fall back to examples.
 
 Use the local development database configured for `apps/api`; never apply this migration to production as part of this PR. With local environment variables configured:
 

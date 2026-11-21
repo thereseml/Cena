@@ -130,11 +130,17 @@ Estimated dates do not become verified package dates. Undated stock is not
 automatically excluded. This is a conservative stock estimate, not a food-safety
 or allergy guarantee.
 
-Category/time/search are hard filters. Ranking then orders by fully covered
+Category/time/search are hard filters. Recommendations rank by fully covered
 ingredient fraction, fewer missing rows, fewer unknown rows, more partial rows,
-shorter total time, stable UUID. Quantities of different dimensions are not added
-together and no percentage is displayed to users. Standard browsing uses stable
-database title/UUID ordering.
+then whether a positively allocated, user-entered batch date falls from today
+through three days ahead, shorter total time and stable UUID. Date urgency is
+therefore only a tie-breaker after inventory suitability; estimated dates, passed
+dates and unallocated stock never provide a boost. Past use-by batches are
+excluded, and past best-before batches require assessment and are not treated as
+available. The API exposes `usesExpiringIngredients` from the same actual matching
+allocation; the mobile card only shows its explanation when that flag is true.
+Quantities of different dimensions are not added together and no percentage is
+displayed to users. Standard browsing uses stable database title/UUID ordering.
 
 ## Scaling And Limitations
 

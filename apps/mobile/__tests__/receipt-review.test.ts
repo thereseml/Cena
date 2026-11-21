@@ -71,6 +71,22 @@ it('normalizes decimal comma and trims names, leaving all expiry information abs
   expect(reviewItemError({ ...toReviewItem(product), quantity: '999999999,999' })).toBeNull();
 });
 
+it('allows optional user-entered dates during review without inferring them from the receipt', () => {
+  const item = toReviewItem(product);
+  expect(item.expiryDate).toBe('');
+  expect(
+    toInventoryInput({ ...item, expiryDate: '2026-11-16', expiryType: 'USE_BY' }),
+  ).toMatchObject({
+    expiryDate: '2026-11-16',
+    expiryType: 'USE_BY',
+    expirySource: 'USER_ENTERED',
+  });
+  expect(reviewItemError({ ...item, expiryDate: '2026-02-30', expiryType: 'USE_BY' })).toMatch(
+    /ÅÅÅÅ-MM-DD/,
+  );
+  expect(reviewItemError({ ...item, expiryDate: '2026-11-16', expiryType: null })).toMatch(/Välj/);
+});
+
 it('handles error message codes as well as code properties without leaking internal details', () => {
   expect(receiptErrorMessage(new Error('NO_TEXT'))).toMatch(/Ingen text/);
   expect(receiptErrorMessage({ message: 'native secrets' })).toMatch(/Kvittot kunde inte läsas/);

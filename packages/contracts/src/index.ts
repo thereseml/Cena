@@ -39,6 +39,7 @@ export interface RecipeSummary {
   servings: number;
   tags: string[];
   availability: RecipeAvailabilitySummary | null;
+  usesExpiringIngredients: boolean;
 }
 
 export interface RecipeDetail extends RecipeSummary {
